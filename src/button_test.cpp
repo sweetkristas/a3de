@@ -343,7 +343,7 @@ int main(int argc, char* argv[])
 	point window_size = point(800, 480);
 
 	try {
-		SDL sdl(SDL_INIT_VIDEO /*| SDL_INIT_AUDIO*/);
+		SDL sdl(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 		sdl_gl_setup();
 		sdl.create_window("Button position test", 
 			SDL_WINDOWPOS_UNDEFINED, 
