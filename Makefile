@@ -20,7 +20,8 @@ $(error SDL2 is not installed on your system.)
 endif
 
 INC := -Isrc $(shell pkg-config --cflags sdl2 SDL2_image libpng zlib SDL2_ttf SDL2_mixer)
-LIBS := -llua52 -ldl $(shell pkg-config --libs sdl2 SDL2_image libpng zlib SDL2_ttf SDL2_mixer)
+LIBS := -llua52 -ldl -lboost_regex -lboost_system -lboost_thread\
+	$(shell pkg-config --libs sdl2 SDL2_image libpng zlib SDL2_ttf SDL2_mixer)
 
 objects = \
 	src/lua1.o
