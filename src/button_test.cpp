@@ -9,6 +9,8 @@
 #include <sstream>
 #include <vector>
 
+#include "stdafx.h"
+
 // Approximate delay between frames.
 #define FRAME_RATE	1000 / 60
 
