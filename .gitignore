@@ -12,5 +12,8 @@
 *.la
 *.a
 
+# dependency files
+*.d
+
 # executable files
 a3de

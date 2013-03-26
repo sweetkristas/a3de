@@ -10,7 +10,7 @@ ifeq ($(OPTIMIZE),yes)
 BASE_CXXFLAGS += -O2
 endif
 
-BASE_CXXFLAGS += -g -fno-inline-functions -fthreadsafe-statics -Wall
+BASE_CXXFLAGS += -std=gnu++0x -g -fno-inline-functions -fthreadsafe-statics -Wall
 
 SDL2_CONFIG?=sdl2-config
 USE_SDL2?=$(shell which $(SDL2_CONFIG) 2>&1 > /dev/null && echo yes)
@@ -21,10 +21,10 @@ endif
 
 INC := -Isrc $(shell pkg-config --cflags sdl2 SDL2_image libpng zlib SDL2_ttf SDL2_mixer)
 LIBS := -llua52 -ldl -lboost_regex -lboost_system -lboost_thread\
-	$(shell pkg-config --libs sdl2 SDL2_image libpng zlib SDL2_ttf SDL2_mixer)
+	$(shell pkg-config --libs x11 gl sdl2 SDL2_image libpng zlib SDL2_ttf SDL2_mixer)
 
 objects = \
-	src/lua1.o
+	src/button_test.o
 
 src/%.o : src/%.cpp
 	@echo "Building:" $<
