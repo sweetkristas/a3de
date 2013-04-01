@@ -1,217 +1,20 @@
 // button_test.cpp : Defines the entry point for the application.
 //
 
-#include "SDL.h"
-#define NO_SDL_GLEXT
-#include "SDL_opengl.h"
-//#include <GL/glext.h>
 #include <iostream>
 #include <sstream>
 #include <vector>
+
+#include "geometry.hpp"
+#include "utils.hpp"
+#include "unit_test.hpp"
+#include "wm.hpp"
 
 #include "stdafx.h"
 
 // Approximate delay between frames.
 #define FRAME_RATE	1000 / 60
 
-template<class T> std::vector<T> split(const T& str, const T& delimiters) 
-{
-    std::vector<T> v;
-    typename T::size_type start = 0;
-    auto pos = str.find_first_of(delimiters, start);
-    while(pos != T::npos) {
-        if(pos != start) // ignore empty tokens
-            v.emplace_back(str, start, pos - start);
-        start = pos + 1;
-        pos = str.find_first_of(delimiters, start);
-    }
-    if(start < str.length()) // ignore trailing delimiter
-        v.emplace_back(str, start, str.length() - start); // add what's left of the string
-    return v;
-}
-
-class init_error : public std::exception
-{
-public:
-	init_error() : exception(), msg_(SDL_GetError())
-	{}
-	init_error(const std::string& msg) : exception(), msg_(msg)
-	{}
-	virtual ~init_error() throw()
-	{}
-	virtual const char* what() const throw() { return msg_.c_str(); }
-private:
-	std::string msg_;
-};
-
-class SDL
-{
-public:
-	SDL(Uint32 flags = 0)
-	{
-		if (SDL_Init(flags) < 0) {
-			std::stringstream ss;
-			ss << "Unable to initialize SDL: " << SDL_GetError() << std::endl;
-			throw init_error(ss.str());
-		}
-	}
-	void create_window(const std::string& title, int x, int y, int w, int h, Uint32 flags)
-	{
-		window_ = SDL_CreateWindow(title.c_str(), x, y, w, h, flags);
-		if(!window_) {
-			std::stringstream ss;
-			ss << "Could not create window: " << SDL_GetError() << std::endl;
-			throw init_error(ss.str());
-		}
-		width_ = w;
-		height_ = h;
-	}
-	void gl_init()
-	{
-		glcontext_ = SDL_GL_CreateContext(window_);
-		glMatrixMode(GL_PROJECTION | GL_MODELVIEW);
-		glLoadIdentity();
-		glOrtho(0, width_, height_, 0, 0, 1);
-
-		glShadeModel(GL_SMOOTH);
-		glEnable(GL_BLEND);
-		glEnable(GL_TEXTURE_2D);
-
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	}
-	void swap() 
-	{
-		SDL_GL_SwapWindow(window_);
-	}
-	virtual ~SDL()
-	{
-		SDL_GL_DeleteContext(glcontext_);
-		SDL_DestroyWindow(window_);
-		SDL_Quit();
-	}
-private:
-	SDL_Window* window_;
-	SDL_GLContext glcontext_;
-	int width_;
-	int height_;
-};
-
-struct point 
-{
-	explicit point(const std::string& str)
-	{
-		std::vector<std::string> buf = split<std::string>(str, ",");
-		if(buf.size() != 2) {
-			x = y = 0;
-		} else {
-			x = strtol(buf[0].c_str(), NULL, 10);
-			y = strtol(buf[1].c_str(), NULL, 10);
-		}
-	}
-	explicit point(int x=0, int y=0) : x(x), y(y)
-	{}
-	explicit point(const std::vector<int>& v)
-	{
-		if(v.empty()) {
-			x = y = 0;
-		} else if(v.size() == 1) {
-			x = v[0];
-			y = 0;
-		} else {
-			x = v[0];
-			y = v[1];
-		}
-	}
-
-	std::string to_string() const
-	{
-		std::stringstream ss;
-		ss << x << "," << y;
-		return ss.str();
-	}
-
-	union 
-	{
-		struct { int x, y; };
-		int buf[2];
-	};
-};
-
-class rect 
-{
-public:
-	static rect from_coordinates(int x1, int y1, int x2, int y2);
-	explicit rect(const std::string& str);
-	explicit rect(int x=0, int y=0, int w=0, int h=0)
-		: top_left_(std::min(x, x+w), std::min(y, y+h)),
-		bottom_right_(std::max(x, x+w), std::max(y, y+h))
-	{}
-	explicit rect(const std::vector<int>& v)
-	{
-		switch(v.size()) {
-		case 2:
-			*this = rect::from_coordinates(v[0], v[1], v[0], v[1]);
-			break;
-		case 3:
-			*this = rect::from_coordinates(v[0], v[1], v[2], v[1]);
-			break;
-		case 4:
-			*this = rect::from_coordinates(v[0], v[1], v[2], v[3]);
-			break;
-		default:
-			*this = rect();
-			break;
-		}
-	}
-	int x() const { return top_left_.x; }
-	int y() const { return top_left_.y; }
-	int x2() const { return bottom_right_.x; }
-	int y2() const { return bottom_right_.y; }
-	int w() const { return bottom_right_.x - top_left_.x; }
-	int h() const { return bottom_right_.y - top_left_.y; }
-
-	GLfloat xf() const { return GLfloat(top_left_.x); }
-	GLfloat yf() const { return GLfloat(top_left_.y); }
-	GLfloat x2f() const { return GLfloat(bottom_right_.x); }
-	GLfloat y2f() const { return GLfloat(bottom_right_.y); }
-	GLfloat wf() const { return GLfloat(bottom_right_.x - top_left_.x); }
-	GLfloat hf() const { return GLfloat(bottom_right_.y - top_left_.y); }
-
-	int mid_x() const { return (x() + x2())/2; }
-	int mid_y() const { return (y() + y2())/2; }
-
-	point& top_left() { return top_left_; }
-	point& bottom_right() { return bottom_right_; }
-	const point& top_left() const { return top_left_; }
-	const point& bottom_right() const { return bottom_right_; }
-
-	rect& operator+= (const point& p)
-	{
-		top_left_.x += p.x;
-		top_left_.y += p.y;
-		bottom_right_.x += p.x;
-		bottom_right_.y += p.y;
-		return *this;
-	}
-
-	std::string to_string() const
-	{
-		std::stringstream ss;
-		ss << x() << "," << y() << "," << (x2()-1) << "," << (y2()-1);
-		return ss.str();
-	}
-
-	SDL_Rect sdl_rect() const { SDL_Rect r = {x(), y(), w(), h()}; return r; }
-
-	bool empty() const { return w() == 0 || h() == 0; }
-private:
-	point top_left_, bottom_right_;
-};
 
 uint8_t truncate_to_char(int value)
 {
@@ -345,22 +148,27 @@ int main(int argc, char* argv[])
 	point window_size = point(800, 480);
 
 	try {
-		SDL sdl(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+		if(test::run_tests() == false) {
+			return -1;
+		}
+
+		graphics::SDL sdl(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+		graphics::window_manager wm;
 		sdl_gl_setup();
-		sdl.create_window("Button position test", 
-			SDL_WINDOWPOS_UNDEFINED, 
-			SDL_WINDOWPOS_UNDEFINED, 
+		wm.create_window("Button position test", 
+			SDL_WINDOWPOS_CENTERED, 
+			SDL_WINDOWPOS_CENTERED, 
 			window_size.x, 
 			window_size.y, 
 			SDL_WINDOW_OPENGL);
-		sdl.gl_init();
+		wm.gl_init();
 
 		SDL_Event e = {0};
 		while(e.type != SDL_KEYDOWN && e.type != SDL_QUIT) {
 			Uint32 cycle_start_tick = SDL_GetTicks();
 			SDL_PollEvent(&e);
 			render(window_size.x, window_size.y);
-			sdl.swap();
+			wm.swap();
 			Uint32 delay = SDL_GetTicks() - cycle_start_tick;
 			if(delay > FRAME_RATE) {
 				std::cerr << "CYCLE TOO LONG: " << delay << std::endl;

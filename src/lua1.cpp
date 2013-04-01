@@ -2,6 +2,8 @@
 
 #include "lua.hpp"
 
+#include "stdafx.h"
+
 /* the Lua interpreter */
 lua_State* L;
 

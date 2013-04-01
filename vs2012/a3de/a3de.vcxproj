@@ -19,7 +19,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -46,8 +46,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../../SDL/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../boost;../../../SDL/include;../../../lua/src;c:/Projects/a3de/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Create</PrecompiledHeader>
+      <PreprocessorDefinitions>NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -73,10 +74,36 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\button_test.cpp" />
+    <ClCompile Include="..\..\src\filesystem.cpp" />
+    <ClCompile Include="..\..\src\geometry.cpp" />
+    <ClCompile Include="..\..\src\json.cpp" />
+    <ClCompile Include="..\..\src\lua1.cpp" />
+    <ClCompile Include="..\..\src\module.cpp" />
+    <ClCompile Include="..\..\src\node.cpp" />
+    <ClCompile Include="..\..\src\render.cpp" />
+    <ClCompile Include="..\..\src\shaders.cpp" />
+    <ClCompile Include="..\..\src\unit_test.cpp" />
+    <ClCompile Include="..\..\src\utils.cpp" />
+    <ClCompile Include="..\..\src\wm.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\asserts.hpp" />
+    <ClInclude Include="..\..\src\filesystem.hpp" />
+    <ClInclude Include="..\..\src\formatter.hpp" />
+    <ClInclude Include="..\..\src\geometry.hpp" />
+    <ClInclude Include="..\..\src\json.hpp" />
+    <ClInclude Include="..\..\src\lua.hpp" />
+    <ClInclude Include="..\..\src\module.hpp" />
+    <ClInclude Include="..\..\src\node.hpp" />
+    <ClInclude Include="..\..\src\ref_counted_ptr.hpp" />
+    <ClInclude Include="..\..\src\render.hpp" />
+    <ClInclude Include="..\..\src\shaders.hpp" />
     <ClInclude Include="..\..\src\stdafx.h" />
     <ClInclude Include="..\..\src\targetver.h" />
+    <ClInclude Include="..\..\src\unit_test.hpp" />
+    <ClInclude Include="..\..\src\utils.hpp" />
+    <ClInclude Include="..\..\src\vecs.hpp" />
+    <ClInclude Include="..\..\src\wm.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
