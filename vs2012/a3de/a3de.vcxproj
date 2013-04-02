@@ -46,14 +46,14 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../../boost;../../../SDL/include;../../../lua/src;c:/Projects/a3de/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeader>Create</PrecompiledHeader>
-      <PreprocessorDefinitions>NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../../boost;../../../SDL/include;../../../lua/src;../../../glee/DATA/output;c:/Projects/a3de/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>opengl32.lib;SDL.lib;SDLmain.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>../../../SDL/VisualC/SDLmain/$(Platform)/$(Configuration);../../../SDL/VisualC/SDL/$(Platform)/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../../../SDL/VisualC/SDLmain/$(Platform)/$(Configuration);../../../SDL/VisualC/SDL/$(Platform)/$(Configuration);../../../boost/stage32-debug-static/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <EntryPointSymbol>
       </EntryPointSymbol>
@@ -73,6 +73,38 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\lua\src\lapi.c" />
+    <ClCompile Include="..\..\..\lua\src\lauxlib.c" />
+    <ClCompile Include="..\..\..\lua\src\lbaselib.c" />
+    <ClCompile Include="..\..\..\lua\src\lbitlib.c" />
+    <ClCompile Include="..\..\..\lua\src\lcode.c" />
+    <ClCompile Include="..\..\..\lua\src\lcorolib.c" />
+    <ClCompile Include="..\..\..\lua\src\lctype.c" />
+    <ClCompile Include="..\..\..\lua\src\ldblib.c" />
+    <ClCompile Include="..\..\..\lua\src\ldebug.c" />
+    <ClCompile Include="..\..\..\lua\src\ldo.c" />
+    <ClCompile Include="..\..\..\lua\src\ldump.c" />
+    <ClCompile Include="..\..\..\lua\src\lfunc.c" />
+    <ClCompile Include="..\..\..\lua\src\lgc.c" />
+    <ClCompile Include="..\..\..\lua\src\linit.c" />
+    <ClCompile Include="..\..\..\lua\src\liolib.c" />
+    <ClCompile Include="..\..\..\lua\src\llex.c" />
+    <ClCompile Include="..\..\..\lua\src\lmathlib.c" />
+    <ClCompile Include="..\..\..\lua\src\lmem.c" />
+    <ClCompile Include="..\..\..\lua\src\loadlib.c" />
+    <ClCompile Include="..\..\..\lua\src\lobject.c" />
+    <ClCompile Include="..\..\..\lua\src\lopcodes.c" />
+    <ClCompile Include="..\..\..\lua\src\loslib.c" />
+    <ClCompile Include="..\..\..\lua\src\lparser.c" />
+    <ClCompile Include="..\..\..\lua\src\lstate.c" />
+    <ClCompile Include="..\..\..\lua\src\lstring.c" />
+    <ClCompile Include="..\..\..\lua\src\lstrlib.c" />
+    <ClCompile Include="..\..\..\lua\src\ltable.c" />
+    <ClCompile Include="..\..\..\lua\src\ltablib.c" />
+    <ClCompile Include="..\..\..\lua\src\ltm.c" />
+    <ClCompile Include="..\..\..\lua\src\lundump.c" />
+    <ClCompile Include="..\..\..\lua\src\lvm.c" />
+    <ClCompile Include="..\..\..\lua\src\lzio.c" />
     <ClCompile Include="..\..\src\button_test.cpp" />
     <ClCompile Include="..\..\src\filesystem.cpp" />
     <ClCompile Include="..\..\src\geometry.cpp" />
@@ -91,6 +123,7 @@
     <ClInclude Include="..\..\src\filesystem.hpp" />
     <ClInclude Include="..\..\src\formatter.hpp" />
     <ClInclude Include="..\..\src\geometry.hpp" />
+    <ClInclude Include="..\..\src\graphics.hpp" />
     <ClInclude Include="..\..\src\json.hpp" />
     <ClInclude Include="..\..\src\lua.hpp" />
     <ClInclude Include="..\..\src\module.hpp" />
@@ -98,12 +131,14 @@
     <ClInclude Include="..\..\src\ref_counted_ptr.hpp" />
     <ClInclude Include="..\..\src\render.hpp" />
     <ClInclude Include="..\..\src\shaders.hpp" />
-    <ClInclude Include="..\..\src\stdafx.h" />
     <ClInclude Include="..\..\src\targetver.h" />
     <ClInclude Include="..\..\src\unit_test.hpp" />
     <ClInclude Include="..\..\src\utils.hpp" />
     <ClInclude Include="..\..\src\vecs.hpp" />
     <ClInclude Include="..\..\src\wm.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\glee\DATA\output\GLee.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

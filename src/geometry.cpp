@@ -1,15 +1,13 @@
-#include <GLES2/gl2.h>
+#include "graphics.hpp"
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 
 #include "geometry.hpp"
 #include "utils.hpp"
 
-#include "stdafx.h"
-
 point::point(const std::string& str)
 {
-	std::vector<std::string> buf = split<std::string>(str, ",");
+	std::vector<std::string> buf = utils::split(str, ",");
 	if(buf.size() != 2) {
 		x = y = 0;
 	} else {
@@ -64,7 +62,7 @@ rect::rect(const std::string& str)
 
 	int items[4];
 	int num_items = 0;
-	std::vector<std::string> buf = split<std::string>(str, ",");
+	std::vector<std::string> buf = utils::split(str, ",");
 	for(int n = 0; n != 4 && n != buf.size(); ++n) {
 		items[num_items++] = boost::lexical_cast<int>(buf[n]);
 	}

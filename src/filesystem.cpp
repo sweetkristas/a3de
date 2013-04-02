@@ -6,8 +6,6 @@
 #include "asserts.hpp"
 #include "filesystem.hpp"
 
-#include "stdafx.h"
-
 namespace sys
 {
 	using namespace boost::filesystem;
@@ -20,6 +18,7 @@ namespace sys
 
 	std::string read_file(const std::string& name)
 	{
+		std::cerr << "current path: " << initial_path() << std::endl;
 		ASSERT_LOG(file_exists(name), "Couldn't read file: " << name);
 		std::ifstream file(name, std::ios_base::binary);
 		std::stringstream ss;

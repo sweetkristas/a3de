@@ -1,9 +1,6 @@
 #pragma once
 
-#include "SDL.h"
-#define NO_SDL_GLEXT
-#include "SDL_opengl.h"
-
+#include "graphics.hpp"
 #include "vecs.hpp"
 
 namespace graphics

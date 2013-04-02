@@ -4,8 +4,6 @@
 #include "asserts.hpp"
 #include "module.hpp"
 
-#include "stdafx.h"
-
 namespace module
 {
 	using namespace boost::filesystem;

@@ -13,7 +13,7 @@ namespace json
 		{}
 	};
 
-	node parse(const std::string& s);
-	node parse_from_file(const std::string& fname);
-	void write(const std::string fnanme, const node& n);
+	node::node parse(const std::string& s);
+	node::node parse_from_file(const std::string& fname);
+	void write(const std::string fnanme, const node::node& n);
 }

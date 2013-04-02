@@ -1,9 +1,7 @@
 #include <sstream>
 #include <vector>
-#include <GLES2/gl2.h>
+#include "graphics.hpp"
 #include "wm.hpp"
-
-#include "stdafx.h"
 
 namespace graphics
 {

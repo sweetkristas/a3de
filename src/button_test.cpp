@@ -5,12 +5,13 @@
 #include <sstream>
 #include <vector>
 
+#include "filesystem.hpp"
 #include "geometry.hpp"
+#include "shaders.hpp"
 #include "utils.hpp"
 #include "unit_test.hpp"
 #include "wm.hpp"
 
-#include "stdafx.h"
 
 // Approximate delay between frames.
 #define FRAME_RATE	1000 / 60
@@ -34,10 +35,12 @@ namespace graphics
 			c_.rgba[1] = truncate_to_char(g);
 			c_.rgba[2] = truncate_to_char(b);
 			c_.rgba[3] = truncate_to_char(a);
+			set_float_values();
 		}
 		explicit color(uint32_t rgba = 0)
 		{
 			c_.value = rgba;
+			set_float_values();
 		}
 		explicit color(const SDL_Color& col)
 		{
@@ -45,6 +48,18 @@ namespace graphics
 			c_.rgba[1] = col.g;
 			c_.rgba[2] = col.b;
 			c_.rgba[3] = 255;
+			set_float_values();
+		}
+		explicit color(float r, float g, float b, float a=1.0f)
+		{
+			rgbaf_[0] = clampf(r);
+			rgbaf_[1] = clampf(g);
+			rgbaf_[2] = clampf(b);
+			rgbaf_[3] = clampf(a);
+			c_.rgba[0] = int(rgbaf_[0]*255.0f);
+			c_.rgba[1] = int(rgbaf_[1]*255.0f);
+			c_.rgba[2] = int(rgbaf_[2]*255.0f);
+			c_.rgba[3] = int(rgbaf_[3]*255.0f);
 		}
 
 		uint8_t r() const { return c_.rgba[0]; }
@@ -58,18 +73,43 @@ namespace graphics
 			return c;
 		}
 
+		const float* as_gl_color() const
+		{
+			return rgbaf_;
+		}
+		float* as_gl_color()
+		{
+			return rgbaf_;
+		}
+
 	private:
+		void set_float_values()
+		{
+			rgbaf_[0] = c_.rgba[0] / 255.0f;
+			rgbaf_[1] = c_.rgba[1] / 255.0f;
+			rgbaf_[2] = c_.rgba[2] / 255.0f;
+			rgbaf_[3] = c_.rgba[3] / 255.0f;
+		}
+
+		float clampf(float value)
+		{
+			if(value < 0.0f) return 0.0f;
+			if(value > 1.0f) return 1.0f;
+			return value;
+		}
+
 		union PixelUnion 
 		{
 			uint32_t value;
 			uint8_t rgba[4];
 		};
+		float rgbaf_[4];
 
 		PixelUnion c_;
 	};
 }
 
-void draw_rect(const rect& r, const graphics::color& color)
+void draw_rect(const rect& r, GLint vertex_attribute_index)
 {
 	GLfloat varray[] = {
 		r.xf(), r.yf(),
@@ -77,14 +117,9 @@ void draw_rect(const rect& r, const graphics::color& color)
 		r.xf(), r.yf()+r.hf(),
 		r.xf()+r.wf(), r.yf()+r.hf()
 	};
-	glDisable(GL_TEXTURE_2D);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glColor4ub(color.r(),color.g(),color.b(),color.a());
-	glVertexPointer(2, GL_FLOAT, 0, varray);
+	glEnableVertexAttribArray(vertex_attribute_index);
+	glVertexAttribPointer(vertex_attribute_index, 2, GL_FLOAT, 0, 0, varray);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glColor4ub(255, 255, 255, 255);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glEnable(GL_TEXTURE_2D);
 }
 
 void sdl_gl_setup()
@@ -127,15 +162,45 @@ void render(int width, int height)
 	button_action_star += point(width - 568, height - 210);
 	button_jumpdown_semicicle += point(width - 374, height - 326);
 
-	draw_rect(button_left, graphics::color(255,0,0));
-	draw_rect(button_right, graphics::color(255,0,0));
-	draw_rect(button_attack_toggle, graphics::color(128,0,0));
-	draw_rect(button_attack_square, graphics::color(0,255,0));
-	draw_rect(button_attack_arrow_up, graphics::color(0,128,0));
-	draw_rect(button_attack_arrow_down, graphics::color(0,128,0));
-	draw_rect(button_jump_circle, graphics::color(0,0,255));
-	draw_rect(button_action_star, graphics::color(0,255,255));
-	draw_rect(button_jumpdown_semicicle, graphics::color(255,255,0));
+	static shader::program_object_ptr simple_shader;
+	static shader::const_actives_map_iterator color_uniform;
+	static shader::const_actives_map_iterator a_position_it;
+	if(simple_shader == NULL) {
+		simple_shader.reset(new shader::program_object("simple", 
+			shader::shader(GL_VERTEX_SHADER, "simple_vertex", sys::read_file("data/simple_color.vert")), 
+			shader::shader(GL_FRAGMENT_SHADER, "simple_fragment", sys::read_file("data/simple_color.frag"))));
+		color_uniform = simple_shader->get_uniform_iterator("u_color");
+		a_position_it = simple_shader->get_attribute_iterator("a_position");
+	}
+	simple_shader->make_active();
+
+	simple_shader->set_uniform(color_uniform, graphics::color(255,0,0).as_gl_color());
+	draw_rect(button_left, a_position_it->second.location);
+
+	simple_shader->set_uniform(color_uniform, graphics::color(255,0,0).as_gl_color());
+	draw_rect(button_right, a_position_it->second.location);
+
+	simple_shader->set_uniform(color_uniform, graphics::color(128,0,0).as_gl_color());
+	draw_rect(button_attack_toggle, a_position_it->second.location);
+
+	simple_shader->set_uniform(color_uniform, graphics::color(0,255,0).as_gl_color());
+	draw_rect(button_attack_square, a_position_it->second.location);
+
+	simple_shader->set_uniform(color_uniform, graphics::color(0,128,0).as_gl_color());
+	draw_rect(button_attack_arrow_up, a_position_it->second.location);
+
+	simple_shader->set_uniform(color_uniform, graphics::color(0,128,0).as_gl_color());
+	draw_rect(button_attack_arrow_down, a_position_it->second.location);
+
+	simple_shader->set_uniform(color_uniform, graphics::color(0,0,255).as_gl_color());
+	draw_rect(button_jump_circle, a_position_it->second.location);
+
+	simple_shader->set_uniform(color_uniform, graphics::color(0,255,255).as_gl_color());
+	draw_rect(button_action_star, a_position_it->second.location);
+
+	simple_shader->set_uniform(color_uniform, graphics::color(255,255,0).as_gl_color());
+	draw_rect(button_jumpdown_semicicle, a_position_it->second.location);
+
 }
 
 int main(int argc, char* argv[]) 

@@ -3,8 +3,6 @@
 #include "asserts.hpp"
 #include "shaders.hpp"
 
-#include "stdafx.h"
-
 namespace shader
 {
 	shader::shader(GLenum type, const std::string& name, const std::string& code)
@@ -67,16 +65,30 @@ namespace shader
 
 	GLuint program_object::get_attribute(const std::string& attr) const
 	{
-		std::map<std::string, actives>::const_iterator it = attribs_.find(attr);
+		const_actives_map_iterator it = attribs_.find(attr);
 		ASSERT_LOG(it != attribs_.end(), "Attribute \"" << attr << "\" not found in list.");
 		return it->second.location;
 	}
 
 	GLuint program_object::get_uniform(const std::string& attr) const
 	{
-		std::map<std::string, actives>::const_iterator it = uniforms_.find(attr);
+		const_actives_map_iterator it = uniforms_.find(attr);
 		ASSERT_LOG(it != uniforms_.end(), "Uniform \"" << attr << "\" not found in list.");
 		return it->second.location;
+	}
+
+	const_actives_map_iterator program_object::get_attribute_iterator(const std::string& attr) const
+	{
+		const_actives_map_iterator it = attribs_.find(attr);
+		ASSERT_LOG(it != attribs_.end(), "Attribute \"" << attr << "\" not found in list.");
+		return it;
+	}
+
+	const_actives_map_iterator program_object::get_uniform_iterator(const std::string& attr) const
+	{
+		std::map<std::string, actives>::const_iterator it = uniforms_.find(attr);
+		ASSERT_LOG(it != uniforms_.end(), "Uniform \"" << attr << "\" not found in list.");
+		return it;
 	}
 
 	bool program_object::link()
@@ -148,5 +160,76 @@ namespace shader
 			attribs_[a.name] = a;
 		}
 		return true;
+	}
+
+	void program_object::make_active()
+	{
+		glUseProgram(object_);
+	}
+
+	void program_object::set_uniform(const_actives_map_iterator it, GLint* value)
+	{
+		const actives& u = it->second;
+		ASSERT_LOG(value != NULL, "set_uniform(): value is NULL");
+		switch(u.type) {
+		case GL_INT:
+		case GL_BOOL:
+		case GL_SAMPLER_2D:
+		case GL_SAMPLER_CUBE:	
+			glUniform1i(u.location, *value); 
+			break;
+		case GL_INT_VEC2:	
+		case GL_BOOL_VEC2:	
+			glUniform2i(u.location, value[0], value[1]); 
+			break;
+		case GL_INT_VEC3:	
+		case GL_BOOL_VEC3:	
+			glUniform3iv(u.location, u.num_elements, value); 
+			break;
+		case GL_INT_VEC4: 	
+		case GL_BOOL_VEC4:
+			glUniform4iv(u.location, u.num_elements, value); 
+			break;
+		default:
+			ASSERT_LOG(false, "Unhandled uniform type: " << it->second.type);
+		}
+	}
+
+	void program_object::set_uniform(const_actives_map_iterator it, GLfloat* value)
+	{
+		const actives& u = it->second;
+		ASSERT_LOG(value != NULL, "set_uniform(): value is NULL");
+		switch(u.type) {
+		case GL_FLOAT: {
+			glUniform1f(u.location, *value);
+			break;
+		}
+		case GL_FLOAT_VEC2: {
+			glUniform2fv(u.location, u.num_elements, value);
+			break;
+		}
+		case GL_FLOAT_VEC3: {
+			glUniform3fv(u.location, u.num_elements, value);
+			break;
+		}
+		case GL_FLOAT_VEC4: {
+			glUniform4fv(u.location, u.num_elements, value);
+			break;
+		}
+		case GL_FLOAT_MAT2:	{
+			glUniformMatrix2fv(u.location, u.num_elements, GL_FALSE, value);
+			break;
+		}
+		case GL_FLOAT_MAT3: {
+			glUniformMatrix3fv(u.location, u.num_elements, GL_FALSE, value);
+			break;
+		}
+		case GL_FLOAT_MAT4: {
+			glUniformMatrix4fv(u.location, u.num_elements, GL_FALSE, value);
+			break;
+		}
+		default:
+			ASSERT_LOG(false, "Unhandled uniform type: " << it->second.type);
+		}	
 	}
 }

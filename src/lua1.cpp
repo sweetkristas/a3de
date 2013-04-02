@@ -2,8 +2,6 @@
 
 #include "lua.hpp"
 
-#include "stdafx.h"
-
 /* the Lua interpreter */
 lua_State* L;
 
@@ -24,12 +22,12 @@ static int average(lua_State *L)
 	return 2;
 }
 
-int main(int argc, char *argv[])
+/*int main(int argc, char *argv[])
 {
-	/* initialize Lua */
+	// initialize Lua
 	L = luaL_newstate();
 
-	/* load various Lua libraries */
+	// load various Lua libraries
 	luaL_openlibs(L);
 	lua_register(L, "average", average);
 	int ret = luaL_loadfile(L, "run1.lua");
@@ -39,9 +37,9 @@ int main(int argc, char *argv[])
 		lua_pcall(L, 0, 0, 0);
 	}
 	
-	/* cleanup Lua */
+	// cleanup Lua
 	lua_close(L);
 
 	return 0;
 }
-
+*/

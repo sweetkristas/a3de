@@ -1,15 +1,32 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
 
+#include <cstdint>
+
 #include "filesystem.hpp"
 #include "formatter.hpp"
 #include "json.hpp"
 #include "unit_test.hpp"
 
-#include "stdafx.h"
-
 namespace json
 {
+	bool is_space(int c)
+	{
+		if(c == ' ' || c == '\t' || c == '\v' || c == '\r' || c == '\n' || c == '\f') {
+			return true;
+		}
+		return false;
+	}
+
+	bool is_digit(int c)
+	{
+		if(c == '0' || c == '1' || c == '2' || c == '3' 
+			|| c == '4' || c == '5' || c == '6' || c == '7' 
+			|| c == '8' || c == '9') {
+			return true;
+		}
+		return false;
+	}
 
 	class lexer
 	{
@@ -51,7 +68,7 @@ namespace json
 			throw new parse_error(formatter() << "Invalid character in decode: " << c);
 		}
 		
-		boost::tuple<json_token, node> get_next_token()
+		boost::tuple<json_token, node::node> get_next_token()
 		{
 			bool running = true;
 			bool in_string = false;
@@ -62,18 +79,18 @@ namespace json
 					if(in_string) {
 						throw new parse_error(formatter() << "End of data inside string");
 					}
-					return boost::make_tuple(DOCUMENT_END, node());
+					return boost::make_tuple(DOCUMENT_END, node::node());
 				}
 				if(in_string) {
 					if(*it_ == '"') {
 						++it_;
-						node string_node(new_string);
+						node::node string_node(new_string);
 						if(new_string == "true") {
-							return boost::make_tuple(LIT_TRUE, node());
+							return boost::make_tuple(LIT_TRUE, node::node());
 						} else if(new_string == "false") {
-							return boost::make_tuple(LIT_FALSE, node());
+							return boost::make_tuple(LIT_FALSE, node::node());
 						} else if(new_string == "null") {
-							return boost::make_tuple(LIT_NULL, node());
+							return boost::make_tuple(LIT_NULL, node::node());
 						}
 						return boost::make_tuple(STRING_LITERAL, string_node);
 					} else if(*it_ == '\\') {
@@ -120,59 +137,59 @@ namespace json
 							throw new parse_error(formatter() << "Unrecognised quoted token: " << *it_);
 						}
 					} else {
-						new_string += *it_;
+						new_string += *it_++;
 					}
 				} else {
-					if(*it_ == '{' || *it_ == '}' || *it_ == '[' || *it_ == ']' || *it_ == ',' || *it_ == ':' || *it_ == '"' || isspace(*it_)) {
+					if(*it_ == '{' || *it_ == '}' || *it_ == '[' || *it_ == ']' || *it_ == ',' || *it_ == ':' || *it_ == '"' || is_space(*it_)) {
 						if(new_string.empty() == false) {
 							if(new_string == "true") {
-								return boost::make_tuple(LIT_TRUE, node());
+								return boost::make_tuple(LIT_TRUE, node::node());
 							} else if(new_string == "false") {
-								return boost::make_tuple(LIT_FALSE, node());
+								return boost::make_tuple(LIT_FALSE, node::node());
 							} else if(new_string == "null") {
-								return boost::make_tuple(LIT_NULL, node());
+								return boost::make_tuple(LIT_NULL, node::node());
 							} else {
-								boost::make_tuple(LITERAL, node(new_string));
+								boost::make_tuple(LITERAL, node::node(new_string));
 							}
 						}
 					}
 					if(*it_ == '{') {
 						++it_;
-						return boost::make_tuple(LEFT_BRACE, node());
+						return boost::make_tuple(LEFT_BRACE, node::node());
 					} else if(*it_ == '}') {
 						++it_;
-						return boost::make_tuple(RIGHT_BRACE, node());
+						return boost::make_tuple(RIGHT_BRACE, node::node());
 					} else if(*it_ == '[') {
 						++it_;
-						return boost::make_tuple(LEFT_BRACKET, node());
+						return boost::make_tuple(LEFT_BRACKET, node::node());
 					} else if(*it_ == ']') {
 						++it_;
-						return boost::make_tuple(RIGHT_BRACKET, node());
+						return boost::make_tuple(RIGHT_BRACKET, node::node());
 					} else if(*it_ == '.') {
 						++it_;
-						return boost::make_tuple(PERIOD, node());
+						return boost::make_tuple(PERIOD, node::node());
 					} else if(*it_ == ',') {
 						++it_;
-						return boost::make_tuple(COMMA, node());
+						return boost::make_tuple(COMMA, node::node());
 					} else if(*it_ == ':') {
 						++it_;
-						return boost::make_tuple(COLON, node());
+						return boost::make_tuple(COLON, node::node());
 					} else if(*it_ == '"') {
 						in_string = true;
 						++it_;
-					} else if(isdigit(*it_) || *it_ == '-') {
+					} else if(is_digit(*it_) || *it_ == '-') {
 						bool is_float = false;
 						std::string num;
 						if(*it_ == '-') {
 							num += *it_;
 							++it_;
 						}
-						while(isdigit(*it_)) {
+						while(is_digit(*it_)) {
 							num += *it_;
 							++it_;
 						}
 						if(*it_ == '.') {
-							while(isdigit(*it_)) {
+							while(is_digit(*it_)) {
 								num += *it_;
 								++it_;
 							}
@@ -187,17 +204,19 @@ namespace json
 								num += *it_;
 								++it_;
 							}
-							while(isdigit(*it_)) {
+							while(is_digit(*it_)) {
 								num += *it_;
 								++it_;
 							}
 						}
 						if(is_float) {
-							return boost::make_tuple(FLOAT, node(boost::lexical_cast<float>(num)));
+							std::cerr << "Convert \"" << num << "\" to float" << std::endl;
+							return boost::make_tuple(FLOAT, node::node(boost::lexical_cast<float>(num)));
 						} else {
-							return boost::make_tuple(INTEGER, node(boost::lexical_cast<int>(num)));
+							std::cerr << "Convert \"" << num << "\" to int" << std::endl;
+							return boost::make_tuple(INTEGER, node::node(boost::lexical_cast<int64_t>(num)));
 						}
-					} else if(isspace(*it_)) {
+					} else if(is_space(*it_)) {
 						++it_;
 					} else {
 						new_string += *it_;
@@ -205,7 +224,7 @@ namespace json
 					}
 				}
 			}
-			return boost::make_tuple(DOCUMENT_END, node());
+			return boost::make_tuple(DOCUMENT_END, node::node());
 		}
 
 	private:
@@ -213,28 +232,28 @@ namespace json
 		std::string::iterator it_;
 	};
 
-	node parse(const std::string& s)
+	node::node parse(const std::string& s)
 	{
 		lexer lex(s);
 		lexer::json_token tok;
-		node token_value;
+		node::node token_value;
 		do {
 			boost::tie(tok, token_value) = lex.get_next_token();
 		} while(tok != lexer::DOCUMENT_END);
-		return node(); // XXX
+		return node::node(); // XXX
 	}
 
-	node parse_from_file(const std::string& fname)
+	node::node parse_from_file(const std::string& fname)
 	{
 		return parse(sys::read_file(fname));
 	}
 
-	void write(const std::string fnanme, const node& n)
+	void write(const std::string fnanme, const node::node& n)
 	{
 	}
 }
 
 UNIT_TEST(json_parse_test)
 {
-	node n = json::parse_from_file("data/test/sameple.json");
+	node::node n = json::parse_from_file("data/test/sample.json");
 }

@@ -3,11 +3,8 @@
 #include <boost/foreach.hpp>
 #include <iostream>
 #include <map>
-#include <set>
 
 #include "unit_test.hpp"
-
-#include "stdafx.h"
 
 namespace test {
 

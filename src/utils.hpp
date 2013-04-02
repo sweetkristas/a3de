@@ -2,4 +2,7 @@
 
 #include <vector>
 
-template<class T> std::vector<T> split(const T& str, const T& delimiters);
+namespace utils
+{
+	std::vector<std::string> split(const std::string& str, const std::string& delimiters);
+}

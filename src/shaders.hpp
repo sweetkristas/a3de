@@ -3,7 +3,7 @@
 #include <map>
 #include <string>
 
-#include <GLES2/gl2.h>
+#include "graphics.hpp"
 #include "ref_counted_ptr.hpp"
 
 namespace shader
@@ -38,17 +38,28 @@ namespace shader
 		GLint location;
 	};
 
+	typedef std::map<std::string, actives> actives_map;
+	typedef actives_map::iterator actives_map_iterator;
+	typedef actives_map::const_iterator const_actives_map_iterator;
+
 	class program_object : public reference_counted_ptr
 	{
 	public:
 		program_object();
-		explicit program_object(const std::string& name, const shader& vs, const shader& fs);
+		program_object(const std::string& name, const shader& vs, const shader& fs);
 		virtual ~program_object()
 		{}
 		void init(const std::string& name, const shader& vs, const shader& fs);
 		std::string name() const { return name_; }
 		GLuint get_attribute(const std::string& attr) const;
 		GLuint get_uniform(const std::string& attr) const;
+		const_actives_map_iterator get_attribute_iterator(const std::string& attr) const;
+		const_actives_map_iterator get_uniform_iterator(const std::string& attr) const;
+
+		void set_uniform(const_actives_map_iterator it, GLfloat*);
+		void set_uniform(const_actives_map_iterator it, GLint*);
+
+		void make_active();
 	protected:
 		bool link();
 		bool queryUniforms();
@@ -60,8 +71,8 @@ namespace shader
 		shader vs_;
 		shader fs_;
 		GLuint object_;
-		std::map<std::string, actives> attribs_;
-		std::map<std::string, actives> uniforms_;
+		actives_map attribs_;
+		actives_map uniforms_;
 	};
 
 	typedef boost::intrusive_ptr<program_object> program_object_ptr;
