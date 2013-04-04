@@ -1,37 +1,57 @@
+#include <boost/foreach.hpp>
+
 #include <sstream>
 #include "asserts.hpp"
+#include "json.hpp"
 #include "node.hpp"
+#include "unit_test.hpp"
 
 namespace node 
 {
 	node::node()
-		: type_(NODE_TYPE_NULL), i_(0), f_(0.0f)
+		: type_(NODE_TYPE_NULL), i_(0), f_(0.0f), b_(false)
 	{
 	}
 
+	node::node(const node& rhs) 
+		: type_(rhs.type()), i_(0), f_(0.0f), b_(false)
+	{
+		switch(type_) {
+		case NODE_TYPE_NULL:				 break;
+		case NODE_TYPE_INTEGER:	i_ = rhs.i_; break;
+		case NODE_TYPE_FLOAT:	f_ = rhs.f_; break;
+		case NODE_TYPE_BOOL:	b_ = rhs.b_; break;
+		case NODE_TYPE_STRING:	s_ = rhs.s_; break;
+		case NODE_TYPE_MAP:		m_ = rhs.m_; break;
+		case NODE_TYPE_LIST:	l_ = rhs.l_; break;
+		default:
+			ASSERT_LOG(false, "Unrecognised type in copy constructor: " << type_);
+		}
+	}
+
 	node::node(int64_t n)
-		: type_(NODE_TYPE_INTEGER), i_(n), f_(0.0f)
+		: type_(NODE_TYPE_INTEGER), i_(n), f_(0.0f), b_(false)
 	{
 
 	}
 
 	node::node(float f)
-		: type_(NODE_TYPE_FLOAT), i_(0), f_(f)
+		: type_(NODE_TYPE_FLOAT), i_(0), f_(f), b_(false)
 	{
 	}
 
-	node::node(const std::string&)
-		: type_(NODE_TYPE_STRING), i_(0), f_(0.0f)
+	node::node(const std::string& s)
+		: type_(NODE_TYPE_STRING), i_(0), f_(0.0f), s_(s), b_(false)
 	{
 	}
 
-	node::node(const std::map<node,node>&)
-		: type_(NODE_TYPE_MAP), i_(0), f_(0.0f)
+	node::node(const std::map<node,node>& m)
+		: type_(NODE_TYPE_MAP), i_(0), f_(0.0f), m_(m), b_(false)
 	{
 	}
 
-	node::node(const std::vector<node>&)
-		: type_(NODE_TYPE_LIST), i_(0), f_(0.0f)
+	node::node(const std::vector<node>& l)
+		: type_(NODE_TYPE_LIST), i_(0), f_(0.0f), l_(l), b_(false)
 	{
 	}
 
@@ -95,7 +115,7 @@ namespace node
 			return s.str();
 		}
 		}
-		ASSERT_LOG(false, "as_string() type conversion error from " << type_as_string() << " to int");
+		ASSERT_LOG(false, "as_string() type conversion error from " << type_as_string() << " to string");
 		return "";
 	}
 
@@ -109,7 +129,7 @@ namespace node
 		case NODE_TYPE_BOOL:
 			return b_ ? 1.0f : 0.0f;
 		}
-		ASSERT_LOG(false, "as_float() type conversion error from " << type_as_string() << " to int");
+		ASSERT_LOG(false, "as_float() type conversion error from " << type_as_string() << " to float");
 		return 0;
 	}
 
@@ -129,31 +149,31 @@ namespace node
 		case NODE_TYPE_MAP:
 			return m_.empty() ? false : true;
 		}
-		ASSERT_LOG(false, "as_bool() type conversion error from " << type_as_string() << " to int");
+		ASSERT_LOG(false, "as_bool() type conversion error from " << type_as_string() << " to boolean");
 		return 0;
 	}
 
 	const node_list& node::as_list() const
 	{
-		ASSERT_LOG(type() == NODE_TYPE_LIST, "as_list() type conversion error from " << type_as_string() << " to int");
+		ASSERT_LOG(type() == NODE_TYPE_LIST, "as_list() type conversion error from " << type_as_string() << " to list");
 		return l_;
 	}
 
 	const node_map& node::as_map() const
 	{
-		ASSERT_LOG(type() == NODE_TYPE_MAP, "as_map() type conversion error from " << type_as_string() << " to int");
+		ASSERT_LOG(type() == NODE_TYPE_MAP, "as_map() type conversion error from " << type_as_string() << " to map");
 		return m_;
 	}
 
 	node_list& node::as_mutable_list()
 	{
-		ASSERT_LOG(type() == NODE_TYPE_LIST, "as_mutable_list() type conversion error from " << type_as_string() << " to int");
+		ASSERT_LOG(type() == NODE_TYPE_LIST, "as_mutable_list() type conversion error from " << type_as_string() << " to list");
 		return l_;
 	}
 
 	node_map& node::as_mutable_map()
 	{
-		ASSERT_LOG(type() == NODE_TYPE_MAP, "as_mutable_map() type conversion error from " << type_as_string() << " to int");
+		ASSERT_LOG(type() == NODE_TYPE_MAP, "as_mutable_map() type conversion error from " << type_as_string() << " to map");
 		return m_;
 	}
 
@@ -193,4 +213,162 @@ namespace node
 	{
 		return !(*this < n);
 	}
+
+	const node& node::operator[](size_t n) const
+	{
+		ASSERT_LOG(type() == NODE_TYPE_LIST, "Tried to index node that isn't a list, was: " << type_as_string());
+		ASSERT_LOG(n < l_.size(), "Tried to index a list outside of list bounds: " << n << " >= " << l_.size());
+		return l_[n];
+	}
+
+	const node& node::operator[](const node v) const
+	{
+		if(type() == NODE_TYPE_LIST) {
+			return l_[v.as_int()];
+		} else if(type() == NODE_TYPE_MAP) {
+			auto it = m_.find(v);
+			ASSERT_LOG(it != m_.end(), "Couldn't find key in map");
+			return it->second;
+		} else {
+			ASSERT_LOG(false, "Tried to index a node that isn't a list or map: " << type_as_string());
+		}
+	}
+
+	const node& node::operator[](const std::string& key) const
+	{
+		ASSERT_LOG(type() == NODE_TYPE_MAP, "Tried to index node that isn't a map, was: " << type_as_string());
+		auto it = m_.find(node(key));
+		ASSERT_LOG(it != m_.end(), "Couldn't find key(" << key << ") in map");
+		return it->second;
+	}
+
+	bool node::operator==(const node& n) const
+	{
+		if(type() != n.type()) {
+			if(type() == NODE_TYPE_FLOAT || n.type() == NODE_TYPE_FLOAT) {
+				if(!is_numeric() && !is_null() || !n.is_numeric() && !n.is_null()) {
+					return false;
+				}
+				return is_numeric() == n.is_numeric();
+			}
+			return false;
+		}
+		switch(type()) {
+		case NODE_TYPE_NULL:
+			return n.is_null();
+		case NODE_TYPE_BOOL:
+			return b_ == n.b_;
+		case NODE_TYPE_INTEGER:
+			return i_ == n.i_;
+		case NODE_TYPE_FLOAT:
+			return f_ == n.f_;
+		case NODE_TYPE_STRING:
+			return s_ == n.s_;
+		case NODE_TYPE_MAP:
+			return m_ == n.m_;
+		case NODE_TYPE_LIST:
+			if(l_.size() != n.l_.size()) {
+				return false;
+			}
+			for(size_t ndx = 0; ndx != l_.size(); ++ndx) {
+				if(l_[ndx] != n.l_[ndx]) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	bool node::operator!=(const node& n) const
+	{
+		return !operator==(n);
+	}
+
+	void node::write_json(std::ostream& os, bool pretty, int indent) const
+	{
+		switch(type()) {
+		case NODE_TYPE_NULL:
+			os << "null";
+			break;
+		case NODE_TYPE_BOOL:
+			os << b_ ? "true" : "false";
+			break;
+		case NODE_TYPE_INTEGER:
+			os << i_;
+			break;
+		case NODE_TYPE_FLOAT:
+			os << f_;
+			break;
+		case NODE_TYPE_STRING:
+			for(auto it = s_.begin(); it != s_.end(); ++it) {
+				if(*it == '"') {
+					os << "\\\"";
+				} else if(*it == '\\') {
+					os << "\\\\";
+				} else if(*it == '/') {
+					os << "\\/";
+				} else if(*it == '\b') {
+					os << "\\b";
+				} else if(*it == '\f') {
+					os << "\\f";
+				} else if(*it == '\n') {
+					os << "\\n";
+				} else if(*it == '\r') {
+					os << "\\r";
+				} else if(*it == '\t') {
+					os << "\\t";
+				} else if(*it > 128) {
+					uint8_t value = uint8_t(*it);
+					uint16_t code_point = 0;
+					if(value & 0xe0) {
+						code_point = (value & 0x1f) << 12;
+						value = uint8_t(*it++);
+						code_point |= (value & 0x7f) << 6;
+						value = uint8_t(*it++);
+						code_point |= (value & 0x7f);
+					} else if(value & 0xc0) {
+						code_point = (value & 0x3f) << 6;
+						value = uint8_t(*it++);
+						code_point |= (value & 0x7f);
+					}
+				} else {
+					os << *it;
+				}
+			}
+			break;
+		case NODE_TYPE_MAP:
+			os << pretty ? "{\n" + std::string(' ', indent) : "{";
+			for(auto pr = m_.begin(); pr != m_.end(); ++pr) {
+				if(pr != m_.begin()) {
+					os << pretty ? ",\n" + std::string(' ', indent) : ",";
+				}
+				pr->first.write_json(os, pretty, indent + 4);
+				os << pretty ? ": " : ":";
+				pr->second.write_json(os, pretty, indent + 4);
+			}
+			os << pretty ? "\n" + std::string(' ', indent) + "}" : "}";
+		case NODE_TYPE_LIST:
+			os << pretty ? "[\n" + std::string(' ', indent) : "[";
+			for(auto it = l_.begin(); it != l_.end(); ++it) {
+				if(it != l_.begin()) {
+					os << pretty ? ",\n" + std::string(' ', indent) : ",";
+				}
+				it->write_json(os, pretty, indent + 4);
+			}
+			os << pretty ? "\n" + std::string(' ', indent) + "]" : "]";
+			break;
+		}
+	}
+
+	std::ostream& operator<<(std::ostream& os, const node& n)
+	{
+		n.write_json(os);
+		return os;
+	}
+}
+
+UNIT_TEST(node_tests)
+{
+	CHECK_EQ(node::node("abcde"), node::node("abcde"));
 }

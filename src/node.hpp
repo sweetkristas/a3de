@@ -26,6 +26,7 @@ namespace node
 		};
 
 		node();
+		node(const node&);
 		explicit node(int64_t);
 		explicit node(float);
 		explicit node(const std::string&);
@@ -47,8 +48,26 @@ namespace node
 		node_list& as_mutable_list();
 		node_map& as_mutable_map();
 
+		bool is_string() const { return type_ == NODE_TYPE_STRING; }
+		bool is_null() const { return type_ == NODE_TYPE_NULL; }
+		bool is_bool() const { return type_ == NODE_TYPE_BOOL; }
+		bool is_numeric() const { return is_int() || is_float(); }
+		bool is_int() const { return type_ == NODE_TYPE_INTEGER; }
+		bool is_float() const { return type_ == NODE_TYPE_FLOAT; }
+		bool is_map() const { return type_ == NODE_TYPE_MAP; }
+		bool is_list() const { return type_ == NODE_TYPE_LIST; }
+
 		bool operator<(const node&) const;
 		bool operator>(const node&) const;
+
+		bool operator==(const node&) const;
+		bool operator!=(const node&) const;
+
+		const node& operator[](size_t n) const;
+		const node& operator[](const node v) const;
+		const node& operator[](const std::string& key) const;
+
+		void write_json(std::ostream& s, bool pretty=true, int indent=0) const;
 	protected:
 	private:
 		node_type type_;
@@ -60,4 +79,7 @@ namespace node
 		node_map m_;
 		node_list l_;
 	};
+
+	std::ostream& operator<<(std::ostream& os, const node& n);
 }
+

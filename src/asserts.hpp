@@ -16,16 +16,25 @@
 		}																				\
 	} while(0)
 #else
-#include <windows.h>
 #define ASSERT_LOG(_a,_b)																\
 	do {																				\
 		if(!(_a)) {																		\
 			std::ostringstream _s;														\
 			_s << __FILE__ << ":" << __LINE__ << " ASSERTION FAILED: " << _b << "\n";	\
-			OutputDebugStringA(_s.str().c_str());										\
+			std::cerr << _s.str();														\
 			exit(1);																	\
 		}																				\
 	} while(0)
+//#include <windows.h>
+//#define ASSERT_LOG(_a,_b)																\
+//	do {																				\
+//		if(!(_a)) {																		\
+//			std::ostringstream _s;														\
+//			_s << __FILE__ << ":" << __LINE__ << " ASSERTION FAILED: " << _b << "\n";	\
+//			OutputDebugStringA(_s.str().c_str());										\
+//			exit(1);																	\
+//		}																				\
+//	} while(0)
 #endif
 
 #endif // ASSERTS_HPP_INCLUDED
