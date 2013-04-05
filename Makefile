@@ -24,7 +24,18 @@ LIBS := -llua52 -ldl -lboost_regex -lboost_system -lboost_thread\
 	$(shell pkg-config --libs x11 gl sdl2 SDL2_image libpng zlib SDL2_ttf SDL2_mixer)
 
 objects = \
-	src/button_test.o
+	src/button_test.o \
+	src/filesystem.o \
+	src/geometry.o \
+	src/json.o \
+	src/lua1.o \
+	src/module.o \
+	src/node.o \
+	src/render.o \
+	src/shaders.o \
+	src/unit_test.o \
+	src/utils.o \
+	src/wm.o
 
 src/%.o : src/%.cpp
 	@echo "Building:" $<

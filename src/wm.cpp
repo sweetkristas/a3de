@@ -32,14 +32,11 @@ namespace graphics
 		width_ = w;
 		height_ = h;
 
-		projection_ = mat4(
-			2.0f / w,   0.0f,       0.0f, -1.0f,
-			    0.0f, 2.0f/h,       0.0f, -1.0f,
-				0.0f, 0.0f, 2.0f/2000.0f, -1.0f,
-				0.0f, 0.0f,         0.0f,  1.0f
-			);
+		projection_ = perspective(45.0f, float(w)/float(h), 0.1f, 100.0f);
+		//projection_ = mat4::identity();
 		model_ = mat4::identity();
-		view_ = mat4::identity();
+		view_ = look_at(vec3(4.0f,3.0f,3.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+		//view_ = look_at(vec3(0.0f,0.0f,5.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 	}
 
 	void window_manager::gl_init()
@@ -48,9 +45,20 @@ namespace graphics
 
 		glEnable(GL_BLEND);
 		glEnable(GL_TEXTURE_2D);
+		glShadeModel(GL_SMOOTH);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClearColor(0.1f, 0.1f, 0.0f, 0.1f);
+
+		glViewport(0, 0, GLsizei(width_), GLsizei(height_));
+
+		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+		// Enable depth test
+		//glEnable(GL_DEPTH_TEST);
+		
+		// Accept fragment if it closer to the camera than the former one
+		//glDepthFunc(GL_LESS);
 	}
 
 	void window_manager::swap() 

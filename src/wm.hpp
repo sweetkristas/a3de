@@ -48,6 +48,10 @@ namespace graphics
 		void gl_init();
 		void swap();
 		virtual ~window_manager();
+		
+		const float* model() { return model_.get(); }
+		const float* view() { return view_.get(); }
+		const float* projection() { return projection_.get(); }
 	private:
 		SDL_Window* window_;
 		SDL_GLContext glcontext_;

@@ -56,8 +56,8 @@ namespace shader
 		const_actives_map_iterator get_attribute_iterator(const std::string& attr) const;
 		const_actives_map_iterator get_uniform_iterator(const std::string& attr) const;
 
-		void set_uniform(const_actives_map_iterator it, GLfloat*);
-		void set_uniform(const_actives_map_iterator it, GLint*);
+		void set_uniform(const_actives_map_iterator it, const GLfloat*);
+		void set_uniform(const_actives_map_iterator it, const GLint*);
 
 		void make_active();
 	protected:

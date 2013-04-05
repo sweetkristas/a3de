@@ -167,7 +167,7 @@ namespace shader
 		glUseProgram(object_);
 	}
 
-	void program_object::set_uniform(const_actives_map_iterator it, GLint* value)
+	void program_object::set_uniform(const_actives_map_iterator it, const GLint* value)
 	{
 		const actives& u = it->second;
 		ASSERT_LOG(value != NULL, "set_uniform(): value is NULL");
@@ -195,7 +195,7 @@ namespace shader
 		}
 	}
 
-	void program_object::set_uniform(const_actives_map_iterator it, GLfloat* value)
+	void program_object::set_uniform(const_actives_map_iterator it, const GLfloat* value)
 	{
 		const actives& u = it->second;
 		ASSERT_LOG(value != NULL, "set_uniform(): value is NULL");

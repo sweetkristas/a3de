@@ -128,6 +128,7 @@
     <ClInclude Include="..\..\src\lua.hpp" />
     <ClInclude Include="..\..\src\module.hpp" />
     <ClInclude Include="..\..\src\node.hpp" />
+    <ClInclude Include="..\..\src\profile_timer.hpp" />
     <ClInclude Include="..\..\src\ref_counted_ptr.hpp" />
     <ClInclude Include="..\..\src\render.hpp" />
     <ClInclude Include="..\..\src\shaders.hpp" />

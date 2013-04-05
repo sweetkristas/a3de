@@ -7,6 +7,7 @@
 
 #include "filesystem.hpp"
 #include "geometry.hpp"
+#include "profile_timer.hpp"
 #include "shaders.hpp"
 #include "utils.hpp"
 #include "unit_test.hpp"
@@ -133,15 +134,18 @@ void sdl_gl_setup()
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 }
 
-void render(int width, int height)
+void render(graphics::window_manager& wm, int width, int height)
 {
-	glClearColor(0, 0, 0, 1);
+	profile::manager manager("render");
+
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	//draw_rect(rect(100,100,100,100), graphics::color(255,0,0));
 
 	//int scale = 1;
 	rect button_left = rect(0, 0, 79, 111);
+
 	rect button_right = rect(0, 0, 79, 111);
 	rect button_attack_toggle = rect(0, 0, 100, 100);
 	rect button_attack_square = rect(0, 0, 95, 95);
@@ -171,10 +175,59 @@ void render(int width, int height)
 			shader::shader(GL_FRAGMENT_SHADER, "simple_fragment", sys::read_file("data/simple_color.frag"))));
 		color_uniform = simple_shader->get_uniform_iterator("u_color");
 		a_position_it = simple_shader->get_attribute_iterator("a_position");
+
+		simple_shader->make_active();
+
+		shader::const_actives_map_iterator mm_uniform_it = simple_shader->get_uniform_iterator("model_matrix");
+		shader::const_actives_map_iterator vm_uniform_it = simple_shader->get_uniform_iterator("view_matrix");
+		shader::const_actives_map_iterator pm_uniform_it = simple_shader->get_uniform_iterator("projection_matrix");
+
+		simple_shader->set_uniform(mm_uniform_it, wm.model());
+		simple_shader->set_uniform(vm_uniform_it, wm.view());
+		simple_shader->set_uniform(pm_uniform_it, wm.projection());
 	}
 	simple_shader->make_active();
 
-	simple_shader->set_uniform(color_uniform, graphics::color(255,0,0).as_gl_color());
+	float color[4] = {1.0f, 1.0f, 0.0f, 1.0f};
+	simple_shader->set_uniform(color_uniform, color);
+	GLfloat varray[] = {
+		 //1.0f, -1.0f, 0.0f,
+		 //1.0f,  1.0f, 0.0f,
+		//-1.0f, -1.0f, 0.0f,
+		//-1.0f,  1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		 1.0f, -1.0f, 0.0f,
+		 0.0f,  1.0f, 0.0f,
+	};
+	//GLuint VertexArrayID;
+	//glGenVertexArrays(1, &VertexArrayID);
+	//glBindVertexArray(VertexArrayID);
+
+	//GLuint vertexbuffer;
+	//glGenBuffers(1, &vertexbuffer);
+	//glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(varray), varray, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(a_position_it->second.location);
+	//glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glVertexAttribPointer(
+		a_position_it->second.location,
+		3,                  // size
+		GL_FLOAT,           // type
+		GL_FALSE,           // normalized?
+		0,                  // stride
+		varray				// array buffer offset
+	);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+	glDisableVertexAttribArray(a_position_it->second.location);
+
+	//glDeleteBuffers(1, &vertexbuffer);
+	//glEnableVertexAttribArray(a_position_it->second.location);
+	//glVertexAttribPointer(a_position_it->second.location, 2, GL_FLOAT, 0, 0, varray);
+	//glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+
+	/*simple_shader->set_uniform(color_uniform, graphics::color(255,0,0).as_gl_color());
 	draw_rect(button_left, a_position_it->second.location);
 
 	simple_shader->set_uniform(color_uniform, graphics::color(255,0,0).as_gl_color());
@@ -200,6 +253,7 @@ void render(int width, int height)
 
 	simple_shader->set_uniform(color_uniform, graphics::color(255,255,0).as_gl_color());
 	draw_rect(button_jumpdown_semicicle, a_position_it->second.location);
+	*/
 
 }
 
@@ -232,7 +286,7 @@ int main(int argc, char* argv[])
 		while(e.type != SDL_KEYDOWN && e.type != SDL_QUIT) {
 			Uint32 cycle_start_tick = SDL_GetTicks();
 			SDL_PollEvent(&e);
-			render(window_size.x, window_size.y);
+			render(wm, window_size.x, window_size.y);
 			wm.swap();
 			Uint32 delay = SDL_GetTicks() - cycle_start_tick;
 			if(delay > FRAME_RATE) {

@@ -203,6 +203,9 @@
     <ClInclude Include="..\..\src\graphics.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\profile_timer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\..\..\glee\DATA\output\GLee.lib">
