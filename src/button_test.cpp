@@ -167,13 +167,13 @@ void render(graphics::window_manager& wm, int width, int height)
 	button_jumpdown_semicicle += point(width - 374, height - 326);
 
 	static shader::program_object_ptr simple_shader;
-	static shader::const_actives_map_iterator color_uniform;
+	static shader::const_actives_map_iterator color_attribute;
 	static shader::const_actives_map_iterator a_position_it;
 	if(simple_shader == NULL) {
 		simple_shader.reset(new shader::program_object("simple", 
 			shader::shader(GL_VERTEX_SHADER, "simple_vertex", sys::read_file("data/simple_color.vert")), 
 			shader::shader(GL_FRAGMENT_SHADER, "simple_fragment", sys::read_file("data/simple_color.frag"))));
-		color_uniform = simple_shader->get_uniform_iterator("u_color");
+		color_attribute = simple_shader->get_attribute_iterator("a_color");
 		a_position_it = simple_shader->get_attribute_iterator("a_position");
 
 		simple_shader->make_active();
@@ -188,16 +188,84 @@ void render(graphics::window_manager& wm, int width, int height)
 	}
 	simple_shader->make_active();
 
-	float color[4] = {1.0f, 1.0f, 0.0f, 1.0f};
-	simple_shader->set_uniform(color_uniform, color);
-	GLfloat varray[] = {
-		 //1.0f, -1.0f, 0.0f,
-		 //1.0f,  1.0f, 0.0f,
-		//-1.0f, -1.0f, 0.0f,
-		//-1.0f,  1.0f, 0.0f,
-		-1.0f, -1.0f, 0.0f,
-		 1.0f, -1.0f, 0.0f,
-		 0.0f,  1.0f, 0.0f,
+	//float color[4] = {1.0f, 1.0f, 0.0f, 1.0f};
+	//simple_shader->set_uniform(color_uniform, color);
+	const GLfloat varray[] = {
+		-1.0f,-1.0f,-1.0f, // triangle 1 : begin
+		-1.0f,-1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f, // triangle 1 : end
+		1.0f, 1.0f,-1.0f, // triangle 2 : begin
+		-1.0f,-1.0f,-1.0f,
+		-1.0f, 1.0f,-1.0f, // triangle 2 : end
+		1.0f,-1.0f, 1.0f,
+		-1.0f,-1.0f,-1.0f,
+		1.0f,-1.0f,-1.0f,
+		1.0f, 1.0f,-1.0f,
+		1.0f,-1.0f,-1.0f,
+		-1.0f,-1.0f,-1.0f,
+		-1.0f,-1.0f,-1.0f,
+		-1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f,-1.0f,
+		1.0f,-1.0f, 1.0f,
+		-1.0f,-1.0f, 1.0f,
+		-1.0f,-1.0f,-1.0f,
+		-1.0f, 1.0f, 1.0f,
+		-1.0f,-1.0f, 1.0f,
+		1.0f,-1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f,-1.0f,-1.0f,
+		1.0f, 1.0f,-1.0f,
+		1.0f,-1.0f,-1.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f,-1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f,-1.0f,
+		-1.0f, 1.0f,-1.0f,
+		1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f,-1.0f,
+		-1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,
+		1.0f,-1.0f, 1.0f
+	};
+
+	const GLfloat g_color_buffer_data[] = { 
+		0.583f,  0.771f,  0.014f,
+		0.609f,  0.115f,  0.436f,
+		0.327f,  0.483f,  0.844f,
+		0.822f,  0.569f,  0.201f,
+		0.435f,  0.602f,  0.223f,
+		0.310f,  0.747f,  0.185f,
+		0.597f,  0.770f,  0.761f,
+		0.559f,  0.436f,  0.730f,
+		0.359f,  0.583f,  0.152f,
+		0.483f,  0.596f,  0.789f,
+		0.559f,  0.861f,  0.639f,
+		0.195f,  0.548f,  0.859f,
+		0.014f,  0.184f,  0.576f,
+		0.771f,  0.328f,  0.970f,
+		0.406f,  0.615f,  0.116f,
+		0.676f,  0.977f,  0.133f,
+		0.971f,  0.572f,  0.833f,
+		0.140f,  0.616f,  0.489f,
+		0.997f,  0.513f,  0.064f,
+		0.945f,  0.719f,  0.592f,
+		0.543f,  0.021f,  0.978f,
+		0.279f,  0.317f,  0.505f,
+		0.167f,  0.620f,  0.077f,
+		0.347f,  0.857f,  0.137f,
+		0.055f,  0.953f,  0.042f,
+		0.714f,  0.505f,  0.345f,
+		0.783f,  0.290f,  0.734f,
+		0.722f,  0.645f,  0.174f,
+		0.302f,  0.455f,  0.848f,
+		0.225f,  0.587f,  0.040f,
+		0.517f,  0.713f,  0.338f,
+		0.053f,  0.959f,  0.120f,
+		0.393f,  0.621f,  0.362f,
+		0.673f,  0.211f,  0.457f,
+		0.820f,  0.883f,  0.371f,
+		0.982f,  0.099f,  0.879f
 	};
 	//GLuint VertexArrayID;
 	//glGenVertexArrays(1, &VertexArrayID);
@@ -209,6 +277,8 @@ void render(graphics::window_manager& wm, int width, int height)
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(varray), varray, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(a_position_it->second.location);
+	glEnableVertexAttribArray(color_attribute->second.location);
+
 	//glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	glVertexAttribPointer(
 		a_position_it->second.location,
@@ -218,8 +288,17 @@ void render(graphics::window_manager& wm, int width, int height)
 		0,                  // stride
 		varray				// array buffer offset
 	);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+	glVertexAttribPointer(
+		color_attribute->second.location,
+		3,                  // size
+		GL_FLOAT,           // type
+		GL_FALSE,           // normalized?
+		0,                  // stride
+		g_color_buffer_data				// array buffer offset
+	);
+	glDrawArrays(GL_TRIANGLES, 0, 12*3);
 	glDisableVertexAttribArray(a_position_it->second.location);
+	glDisableVertexAttribArray(color_attribute->second.location);
 
 	//glDeleteBuffers(1, &vertexbuffer);
 	//glEnableVertexAttribArray(a_position_it->second.location);

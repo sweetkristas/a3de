@@ -150,6 +150,9 @@
     <ClCompile Include="..\..\..\lua\src\lzio.c">
       <Filter>Source Files\lua</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\obj_reader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\targetver.h">
@@ -206,10 +209,17 @@
     <ClInclude Include="..\..\src\profile_timer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\obj_reader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\..\..\glee\DATA\output\GLee.lib">
       <Filter>Source Files</Filter>
     </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\data\simple_color.frag" />
+    <None Include="..\..\data\simple_color.vert" />
   </ItemGroup>
 </Project>

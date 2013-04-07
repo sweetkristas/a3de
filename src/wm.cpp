@@ -35,7 +35,7 @@ namespace graphics
 		projection_ = perspective(45.0f, float(w)/float(h), 0.1f, 100.0f);
 		//projection_ = mat4::identity();
 		model_ = mat4::identity();
-		view_ = look_at(vec3(4.0f,3.0f,3.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+		view_ = look_at(vec3(4.0f,3.0f,-3.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 		//view_ = look_at(vec3(0.0f,0.0f,5.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 	}
 

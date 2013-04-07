@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sdl_stdinc.h"
+
 struct vec3
 {
 	float x, y, z;
@@ -97,6 +99,34 @@ inline mat4 perspective(float field_of_view, float aspect_ratio, float near_clip
 		0.0f, 2.0f*near_clip/(top-bottom), 0.0f, 0.0f,
 		0.0f, 0.0f, -(far_clip+near_clip)/(far_clip-near_clip), -2.0f*far_clip*near_clip/(far_clip-near_clip), 
 		0.0f, 0.0f, -1.0f, 0.0f
+	);
+}
+
+// Calculate orthographic project transformation matrix.
+inline mat4 ortho(float field_of_view, float aspect_ratio, float near_clip, float far_clip)
+{
+	float rad = field_of_view / 180.0f * float(M_PI);
+	float range = tan(rad/2.0f) * near_clip;
+	float left = -range * aspect_ratio;
+	float right = range * aspect_ratio;
+	float bottom = -range;
+	float top = range;
+	return mat4(
+		2.0f/(right-left), 0.0f, 0.0f, 0.0f,
+		0.0f, 2.0f/(top-bottom), 0.0f, 0.0f,
+		0.0f, 0.0f, -2.0f/(far_clip-near_clip), (far_clip+near_clip)/(far_clip-near_clip),
+		0.0f, 0.0f, 0.0f, 1.0f 
+	);
+}
+
+// Orthographic projection using specified co-ordinates.
+inline mat4 ortho(float left, float right, float top, float bottom, float near_clip, float far_clip)
+{
+	return mat4(
+		2.0f/(right-left), 0.0f, 0.0f, 0.0f,
+		0.0f, 2.0f/(top-bottom), 0.0f, 0.0f,
+		0.0f, 0.0f, -2.0f/(far_clip-near_clip), (far_clip+near_clip)/(far_clip-near_clip),
+		0.0f, 0.0f, 0.0f, 1.0f 
 	);
 }
 

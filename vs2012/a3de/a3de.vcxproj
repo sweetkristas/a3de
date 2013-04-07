@@ -112,6 +112,7 @@
     <ClCompile Include="..\..\src\lua1.cpp" />
     <ClCompile Include="..\..\src\module.cpp" />
     <ClCompile Include="..\..\src\node.cpp" />
+    <ClCompile Include="..\..\src\obj_reader.cpp" />
     <ClCompile Include="..\..\src\render.cpp" />
     <ClCompile Include="..\..\src\shaders.cpp" />
     <ClCompile Include="..\..\src\unit_test.cpp" />
@@ -128,6 +129,7 @@
     <ClInclude Include="..\..\src\lua.hpp" />
     <ClInclude Include="..\..\src\module.hpp" />
     <ClInclude Include="..\..\src\node.hpp" />
+    <ClInclude Include="..\..\src\obj_reader.hpp" />
     <ClInclude Include="..\..\src\profile_timer.hpp" />
     <ClInclude Include="..\..\src\ref_counted_ptr.hpp" />
     <ClInclude Include="..\..\src\render.hpp" />
@@ -140,6 +142,10 @@
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\..\..\glee\DATA\output\GLee.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\data\simple_color.frag" />
+    <None Include="..\..\data\simple_color.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

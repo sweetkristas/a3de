@@ -440,6 +440,6 @@ UNIT_TEST(json_parse_test)
 	CHECK_EQ(n["map"]["b"].as_string(), "b");
 	CHECK_EQ(n["map"]["c"].as_string(), "c");
 
-	CHECK_EQ(json::parse("[1,2,3,4]"), json::parse("[1,2,3,4]"));
+	CHECK_EQ(json::parse("[1,2,3,4]"), json::parse("[1,\n2,\n3,\n4]"));
 	CHECK_EQ(json::parse("{\"a\":\"a\", b: \"b\", c:\"c\"}"), json::parse("{\"a\":\"a\", b:\"b\",c:\"c\"}"));
 }
