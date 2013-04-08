@@ -139,6 +139,57 @@ void sdl_gl_setup()
 
 namespace graphics
 {
+	#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+	#define SURFACE_MASK 0xFF,0xFF00,0xFF0000,0xFF000000
+	#define SURFACE_MASK_RGB 0xFF,0xFF00,0xFF0000,0x0
+	#else
+	#define SURFACE_MASK 0xFF000000,0xFF0000,0xFF00,0xFF
+	#define SURFACE_MASK_RGB 0xFF0000,0xFF00,0xFF,0x0
+	#endif
+
+	static int power_of_two(int input)
+	{
+		int value = 1;
+
+		while ( value < input ) {
+			value <<= 1;
+		}
+		return value;
+	}
+
+	GLuint ConvertSDLSurfaceToTexture(SDL_Surface *source)
+	{
+		SDL_SetSurfaceBlendMode(source, SDL_BLENDMODE_NONE);
+		int w = power_of_two(source->w);
+		int h = power_of_two(source->h);
+		SDL_Surface *image = SDL_CreateRGBSurface(0, w, h, 32, SURFACE_MASK);
+		ASSERT_LOG(image != NULL, "Couldn't create a temporary surface.");
+
+		SDL_Rect area;
+		area.x = 0;
+		area.y = 0;
+		area.w = source->w;
+		area.h = source->h;
+		SDL_BlitSurface(source, &area, image, &area);
+
+		GLuint t;
+		glGenTextures(1, &t);
+		glBindTexture(GL_TEXTURE_2D, t);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA,
+			w, h,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			image->pixels);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		SDL_FreeSurface(image);
+		return t;
+	}
+
 	class cube : public reference_counted_ptr
 	{
 	public:
@@ -237,16 +288,10 @@ namespace graphics
 			glBindBuffer(GL_ARRAY_BUFFER, uvbuffer_);
 			glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
-			SDL_Surface* surf_ = IMG_Load("images/uvtemplate.png");
-			ASSERT_LOG(surf_ != NULL, "Failed to load image: images/uvtemplate.png");
-			glGenTextures(1, &tex_id_);
-			glBindTexture(GL_TEXTURE_2D, tex_id_);
-			SDL_LockSurface(surf_);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surf_->w, surf_->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surf_->pixels);
-			SDL_UnlockSurface(surf_);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glGenerateMipmap(GL_TEXTURE_2D);
+			SDL_Surface* surf = IMG_Load("images/uvtemplate.png");
+			ASSERT_LOG(surf != NULL, "Failed to load image: images/uvtemplate.png " << IMG_GetError());
+			tex_id_ = ConvertSDLSurfaceToTexture(surf);
+			SDL_FreeSurface(surf);
 		}
 
 		virtual ~cube()
@@ -254,7 +299,6 @@ namespace graphics
 			glDeleteBuffers(1, &vertex_array_);
 			glDeleteBuffers(1, &uvbuffer_);
 			glDeleteTextures(1, &tex_id_);
-			SDL_FreeSurface(surf_);
 		}
 
 		void draw(GLuint vbos[2], int n) const
@@ -303,8 +347,6 @@ namespace graphics
 		GLuint vertex_array_;
 		GLuint uvbuffer_;
 		GLuint tex_id_;
-		
-		SDL_Surface* surf_;
 	};
 
 	typedef boost::intrusive_ptr<cube> cube_ptr;

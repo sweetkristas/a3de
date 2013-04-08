@@ -115,6 +115,7 @@
     <ClCompile Include="..\..\src\obj_reader.cpp" />
     <ClCompile Include="..\..\src\render.cpp" />
     <ClCompile Include="..\..\src\shaders.cpp" />
+    <ClCompile Include="..\..\src\texture.cpp" />
     <ClCompile Include="..\..\src\unit_test.cpp" />
     <ClCompile Include="..\..\src\utils.cpp" />
     <ClCompile Include="..\..\src\wm.cpp" />
@@ -135,6 +136,7 @@
     <ClInclude Include="..\..\src\render.hpp" />
     <ClInclude Include="..\..\src\shaders.hpp" />
     <ClInclude Include="..\..\src\targetver.h" />
+    <ClInclude Include="..\..\src\texture.hpp" />
     <ClInclude Include="..\..\src\unit_test.hpp" />
     <ClInclude Include="..\..\src\utils.hpp" />
     <ClInclude Include="..\..\src\vecs.hpp" />
