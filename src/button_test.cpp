@@ -5,8 +5,11 @@
 #include <sstream>
 #include <vector>
 
+#include <boost/shared_ptr.hpp>
+
 #include "filesystem.hpp"
 #include "geometry.hpp"
+#include "obj_reader.hpp"
 #include "profile_timer.hpp"
 #include "shaders.hpp"
 #include "utils.hpp"
@@ -134,7 +137,314 @@ void sdl_gl_setup()
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 }
 
-void render(graphics::window_manager& wm, int width, int height)
+namespace graphics
+{
+	class cube : public reference_counted_ptr
+	{
+	public:
+		cube(shader::program_object_ptr shader)
+			: shader_(shader)
+		{
+			model_ = mat4::identity();
+			mm_uniform_it_ = shader->get_uniform_iterator("model_matrix");
+			a_position_it_ = shader->get_attribute_iterator("a_position");
+			a_tex_coord_it_ = shader->get_attribute_iterator("a_tex_coord");
+			tex0_it_ = shader->get_uniform_iterator("u_tex0");
+
+			glGenBuffers(1, &vertex_array_);
+			glBindBuffer(GL_ARRAY_BUFFER, vertex_array_);
+			static const GLfloat g_vertex_buffer_data[] = {
+				-1.0f,-1.0f,-1.0f, 1.0f, // triangle 1 : begin
+				-1.0f,-1.0f, 1.0f, 1.0f, 
+				-1.0f, 1.0f, 1.0f, 1.0f, // triangle 1 : end
+				1.0f, 1.0f,-1.0f, 1.0f, // triangle 2 : begin
+				-1.0f,-1.0f,-1.0f, 1.0f, 
+				-1.0f, 1.0f,-1.0f, 1.0f, // triangle 2 : end
+				1.0f,-1.0f, 1.0f, 1.0f, 
+				-1.0f,-1.0f,-1.0f, 1.0f, 
+				1.0f,-1.0f,-1.0f, 1.0f, 
+				1.0f, 1.0f,-1.0f, 1.0f, 
+				1.0f,-1.0f,-1.0f, 1.0f, 
+				-1.0f,-1.0f,-1.0f, 1.0f, 
+				-1.0f,-1.0f,-1.0f, 1.0f, 
+				-1.0f, 1.0f, 1.0f, 1.0f, 
+				-1.0f, 1.0f,-1.0f, 1.0f, 
+				1.0f,-1.0f, 1.0f, 1.0f, 
+				-1.0f,-1.0f, 1.0f, 1.0f, 
+				-1.0f,-1.0f,-1.0f, 1.0f, 
+				-1.0f, 1.0f, 1.0f, 1.0f, 
+				-1.0f,-1.0f, 1.0f, 1.0f, 
+				1.0f,-1.0f, 1.0f, 1.0f, 
+				1.0f, 1.0f, 1.0f, 1.0f, 
+				1.0f,-1.0f,-1.0f, 1.0f, 
+				1.0f, 1.0f,-1.0f, 1.0f, 
+				1.0f,-1.0f,-1.0f, 1.0f, 
+				1.0f, 1.0f, 1.0f, 1.0f, 
+				1.0f,-1.0f, 1.0f, 1.0f, 
+				1.0f, 1.0f, 1.0f, 1.0f, 
+				1.0f, 1.0f,-1.0f, 1.0f, 
+				-1.0f, 1.0f,-1.0f, 1.0f, 
+				1.0f, 1.0f, 1.0f, 1.0f, 
+				-1.0f, 1.0f,-1.0f, 1.0f, 
+				-1.0f, 1.0f, 1.0f, 1.0f, 
+				1.0f, 1.0f, 1.0f, 1.0f, 
+				-1.0f, 1.0f, 1.0f, 1.0f, 
+				1.0f,-1.0f, 1.0f, 1.0f
+			};
+			glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+
+
+			static const GLfloat g_uv_buffer_data[] = { 
+				0.000059f, 1.0f-0.000004f, 
+				0.000103f, 1.0f-0.336048f, 
+				0.335973f, 1.0f-0.335903f, 
+				1.000023f, 1.0f-0.000013f, 
+				0.667979f, 1.0f-0.335851f, 
+				0.999958f, 1.0f-0.336064f, 
+				0.667979f, 1.0f-0.335851f, 
+				0.336024f, 1.0f-0.671877f, 
+				0.667969f, 1.0f-0.671889f, 
+				1.000023f, 1.0f-0.000013f, 
+				0.668104f, 1.0f-0.000013f, 
+				0.667979f, 1.0f-0.335851f, 
+				0.000059f, 1.0f-0.000004f, 
+				0.335973f, 1.0f-0.335903f, 
+				0.336098f, 1.0f-0.000071f, 
+				0.667979f, 1.0f-0.335851f, 
+				0.335973f, 1.0f-0.335903f, 
+				0.336024f, 1.0f-0.671877f, 
+				1.000004f, 1.0f-0.671847f, 
+				0.999958f, 1.0f-0.336064f, 
+				0.667979f, 1.0f-0.335851f, 
+				0.668104f, 1.0f-0.000013f, 
+				0.335973f, 1.0f-0.335903f, 
+				0.667979f, 1.0f-0.335851f, 
+				0.335973f, 1.0f-0.335903f, 
+				0.668104f, 1.0f-0.000013f, 
+				0.336098f, 1.0f-0.000071f, 
+				0.000103f, 1.0f-0.336048f, 
+				0.000004f, 1.0f-0.671870f, 
+				0.336024f, 1.0f-0.671877f, 
+				0.000103f, 1.0f-0.336048f, 
+				0.336024f, 1.0f-0.671877f, 
+				0.335973f, 1.0f-0.335903f, 
+				0.667969f, 1.0f-0.671889f, 
+				1.000004f, 1.0f-0.671847f, 
+				0.667979f, 1.0f-0.335851f
+			};
+
+			glGenBuffers(1, &uvbuffer_);
+			glBindBuffer(GL_ARRAY_BUFFER, uvbuffer_);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
+
+			SDL_Surface* surf_ = IMG_Load("images/uvtemplate.png");
+			ASSERT_LOG(surf_ != NULL, "Failed to load image: images/uvtemplate.png");
+			glGenTextures(1, &tex_id_);
+			glBindTexture(GL_TEXTURE_2D, tex_id_);
+			SDL_LockSurface(surf_);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surf_->w, surf_->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surf_->pixels);
+			SDL_UnlockSurface(surf_);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+
+		virtual ~cube()
+		{
+			glDeleteBuffers(1, &vertex_array_);
+			glDeleteBuffers(1, &uvbuffer_);
+			glDeleteTextures(1, &tex_id_);
+			SDL_FreeSurface(surf_);
+		}
+
+		void draw(GLuint vbos[2], int n) const
+		{
+			shader_->set_uniform(mm_uniform_it_, model_.get());
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, tex_id_);
+			glUniform1i(tex0_it_->second.location, 0);
+
+			glEnableVertexAttribArray(a_position_it_->second.location);
+			glBindBuffer(GL_ARRAY_BUFFER, vertex_array_);
+			glVertexAttribPointer(
+				a_position_it_->second.location, // The attribute we want to configure
+				4,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			);
+			glDrawArrays(GL_TRIANGLES, 0, 12*3);
+			glDisableVertexAttribArray(0);
+
+			//glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
+			//glEnableVertexAttribArray(a_position_it_->second.location);
+			//glVertexAttribPointer(a_position_it_->second.location,
+			//	4,
+			//	GL_FLOAT,
+			//	GL_FALSE,
+			//	0,
+			//	0);
+			//glDrawElements(GL_TRIANGLES, n, GL_UNSIGNED_SHORT, 0);			
+			//glDisableVertexAttribArray(a_position_it_->second.location);
+		}
+	protected:
+	private:
+		mat4 model_;
+		shader::program_object_ptr shader_;
+		shader::const_actives_map_iterator mm_uniform_it_;
+		shader::const_actives_map_iterator a_position_it_;
+		shader::const_actives_map_iterator a_tex_coord_it_;
+		shader::const_actives_map_iterator tex0_it_;
+		//shader::const_actives_map_iterator a_color_it_;
+		//shader::const_actives_map_iterator u_color_it_;
+
+		GLuint vertex_array_;
+		GLuint uvbuffer_;
+		GLuint tex_id_;
+		
+		SDL_Surface* surf_;
+	};
+
+	typedef boost::intrusive_ptr<cube> cube_ptr;
+	typedef boost::intrusive_ptr<const cube> const_cube_ptr;
+
+	class render
+	{
+	public:
+		render(graphics::window_manager& wm, int w, int h) 
+			: wm_(wm), width_(w), height_(h)
+		{
+			obj::load_obj_file("data/test/cube.obj", cube_);
+
+			eye_ = vec3(4.0f,3.0f,10.0f);
+
+			//projection_ = perspective(45.0f, float(w)/float(h), 0.1f, 100.0f);
+			projection_ = mat4::identity();
+			view_ = look_at(eye_, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+
+			// Create vertex buffer object for vertex array.
+			glGenBuffers(2, cube_vbos_);
+			glBindBuffer(GL_ARRAY_BUFFER, cube_vbos_[0]);
+			glBufferData(GL_ARRAY_BUFFER, 
+				cube_.vertices.size()*sizeof(vec4), 
+				&cube_.vertices[0], 
+				GL_STATIC_DRAW);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_vbos_[1]);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+				cube_.face_vertex_index.size()*sizeof(GLushort), 
+				&cube_.face_vertex_index[0], 
+				GL_STATIC_DRAW);
+		}
+
+		virtual ~render()
+		{
+			glDeleteBuffers(2, cube_vbos_);
+		}
+
+		shader::program_object_ptr create_shader(const std::string& name, 
+			const std::string& vname, 
+			const std::string& vfname, 
+			const std::string& fname,
+			const std::string& ffname)
+		{
+			auto it = shaders_.find(name);
+			if(it == shaders_.end()) {
+				shader::program_object_ptr new_shader(new shader::program_object(name,
+					shader::shader(GL_VERTEX_SHADER, vname, sys::read_file(vfname)),
+					shader::shader(GL_FRAGMENT_SHADER, fname, sys::read_file(ffname))));
+				shader_object so;
+				so.shader = new_shader;
+				so.vm_uniform_it = new_shader->get_uniform_iterator("view_matrix");
+				so.pm_uniform_it = new_shader->get_uniform_iterator("projection_matrix");
+				shaders_[name] = so;
+				new_shader->make_active();
+				new_shader->set_uniform(so.vm_uniform_it, view());
+				new_shader->set_uniform(so.pm_uniform_it, projection());
+				return new_shader;
+			}
+			return it->second.shader;
+		}
+
+		void add_object(shader::program_object_ptr shader, cube_ptr obj)
+		{
+			auto it = cube_draw_list_.find(shader);
+			if(it == cube_draw_list_.end()) {
+				std::vector<cube_ptr> v;
+				v.push_back(obj);
+				cube_draw_list_[shader] = v;
+			} else {
+				it->second.push_back(obj);
+			}
+		}
+
+		void draw()
+		{
+			profile::manager manager("render::draw()");
+
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+			for(auto it = cube_draw_list_.begin(); it != cube_draw_list_.end(); ++it) {
+				if(it->second.size() != 0) {
+					it->first->make_active();
+					for(auto obj = it->second.begin(); obj != it->second.end(); ++obj) {
+						(*obj)->draw(cube_vbos_, cube_.face_vertex_index.size());
+					}
+				}
+			}
+		}
+
+		void view_change(float dx, float dy, float dz)
+		{
+			eye_ += vec3(dx, dy, dz);
+			if(eye_.z > 10) {
+				eye_.z = 10;
+			}
+			if(eye_.z < -10) {
+				eye_.z = -10;
+			}
+			view_ = look_at(eye_, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+
+			for(auto it = shaders_.begin(); it != shaders_.end(); ++it) {
+				it->second.shader->set_uniform(it->second.vm_uniform_it, view());
+			}
+		}
+
+		const float* view() { return view_.get(); }
+		const float* projection() { return projection_.get(); }
+	protected:
+	private:
+		obj::obj_data cube_;
+		GLuint cube_vbos_[2];
+
+		int width_;
+		int height_;
+
+		mat4 view_;
+		mat4 projection_;
+
+		vec3 eye_;
+
+		graphics::window_manager& wm_;
+
+		struct shader_object
+		{
+			shader::program_object_ptr shader;
+			shader::const_actives_map_iterator vm_uniform_it;
+			shader::const_actives_map_iterator pm_uniform_it;
+		};
+
+		std::map<std::string, shader_object> shaders_;
+
+		std::map<shader::program_object_ptr, std::vector<cube_ptr> > cube_draw_list_;
+	};
+}
+
+
+/*void render(graphics::window_manager& wm, int width, int height)
 {
 	profile::manager manager("render");
 
@@ -169,6 +479,7 @@ void render(graphics::window_manager& wm, int width, int height)
 	static shader::program_object_ptr simple_shader;
 	static shader::const_actives_map_iterator color_attribute;
 	static shader::const_actives_map_iterator a_position_it;
+	static GLuint cube_array_vbo;
 	if(simple_shader == NULL) {
 		simple_shader.reset(new shader::program_object("simple", 
 			shader::shader(GL_VERTEX_SHADER, "simple_vertex", sys::read_file("data/simple_color.vert")), 
@@ -185,49 +496,12 @@ void render(graphics::window_manager& wm, int width, int height)
 		simple_shader->set_uniform(mm_uniform_it, wm.model());
 		simple_shader->set_uniform(vm_uniform_it, wm.view());
 		simple_shader->set_uniform(pm_uniform_it, wm.projection());
+
 	}
 	simple_shader->make_active();
 
 	//float color[4] = {1.0f, 1.0f, 0.0f, 1.0f};
 	//simple_shader->set_uniform(color_uniform, color);
-	const GLfloat varray[] = {
-		-1.0f,-1.0f,-1.0f, // triangle 1 : begin
-		-1.0f,-1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f, // triangle 1 : end
-		1.0f, 1.0f,-1.0f, // triangle 2 : begin
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f, // triangle 2 : end
-		1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f,
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f
-	};
 
 	const GLfloat g_color_buffer_data[] = { 
 		0.583f,  0.771f,  0.014f,
@@ -299,7 +573,7 @@ void render(graphics::window_manager& wm, int width, int height)
 	glDrawArrays(GL_TRIANGLES, 0, 12*3);
 	glDisableVertexAttribArray(a_position_it->second.location);
 	glDisableVertexAttribArray(color_attribute->second.location);
-
+*/
 	//glDeleteBuffers(1, &vertexbuffer);
 	//glEnableVertexAttribArray(a_position_it->second.location);
 	//glVertexAttribPointer(a_position_it->second.location, 2, GL_FLOAT, 0, 0, varray);
@@ -334,7 +608,7 @@ void render(graphics::window_manager& wm, int width, int height)
 	draw_rect(button_jumpdown_semicicle, a_position_it->second.location);
 	*/
 
-}
+//}
 
 int main(int argc, char* argv[]) 
 {
@@ -361,11 +635,49 @@ int main(int argc, char* argv[])
 			SDL_WINDOW_OPENGL);
 		wm.gl_init();
 
+		graphics::render render_obj(wm, window_size.x, window_size.y);
+		auto shader = render_obj.create_shader("simple", 
+			"simple_vertex", "data/simple_color.vert", 
+			"simple_fragment", "data/simple_color.frag");
+		render_obj.add_object(shader, graphics::cube_ptr(new graphics::cube(shader)));
+
+		/*std::vector<std::vector<std::vector<uint8_t> > > chunk;
+		chunk.resize(256);
+		for(size_t n = 0; n != chunk.size(); ++n) {
+			chunk[n].resize(256);
+			for(size_t m = 0; m != chunk[n].size(); ++m) {
+				chunk[n][m].resize(256);
+			}
+		}*/
+
 		SDL_Event e = {0};
-		while(e.type != SDL_KEYDOWN && e.type != SDL_QUIT) {
+		bool running = true;
+		while(running) {
 			Uint32 cycle_start_tick = SDL_GetTicks();
 			SDL_PollEvent(&e);
-			render(wm, window_size.x, window_size.y);
+			switch(e.type) {
+			case SDL_MOUSEWHEEL:
+				render_obj.view_change(0.0f, 0.0f, float(e.wheel.y));
+				break;
+			case SDL_QUIT:
+				running = false;
+				break;
+			case SDL_KEYDOWN:
+				if(e.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+					running = false;
+				} else if(e.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
+					render_obj.view_change(-0.5f, 0.0f, 0.0f);
+				} else if(e.key.keysym.scancode == SDL_SCANCODE_LEFT) {
+					render_obj.view_change(0.5f, 0.0f, 0.0f);
+				} else if(e.key.keysym.scancode == SDL_SCANCODE_DOWN) {
+					render_obj.view_change(0.0f, -0.5f, 0.0f);
+				} else if(e.key.keysym.scancode == SDL_SCANCODE_UP) {
+					render_obj.view_change(0.0f, 0.5f, 0.0f);
+				}
+				break;
+			}
+
+			render_obj.draw();
 			wm.swap();
 			Uint32 delay = SDL_GetTicks() - cycle_start_tick;
 			if(delay > FRAME_RATE) {

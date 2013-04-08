@@ -46,14 +46,14 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../../boost;../../../SDL/include;../../../lua/src;../../../glee/DATA/output;c:/Projects/a3de/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../boost;../../../SDL/include;../../../SDL_image;../../../lua/src;../../../glee/DATA/output;c:/Projects/a3de/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;SDL.lib;SDLmain.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>../../../SDL/VisualC/SDLmain/$(Platform)/$(Configuration);../../../SDL/VisualC/SDL/$(Platform)/$(Configuration);../../../boost/stage32-debug-static/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;SDL.lib;SDLmain.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../../SDL/VisualC/SDLmain/$(Platform)/$(Configuration);../../../SDL/VisualC/SDL/$(Platform)/$(Configuration);../../../boost/stage32-debug-static/lib;../../../SDL_image/VisualC/Win32/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <EntryPointSymbol>
       </EntryPointSymbol>

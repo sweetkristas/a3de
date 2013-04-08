@@ -1,5 +1,6 @@
 #pragma once
 
+#include "asserts.hpp"
 #include "sdl_stdinc.h"
 
 struct vec3
@@ -10,6 +11,26 @@ struct vec3
 
 	inline vec3(float cx, float cy, float cz) : x(cx), y(cy), z(cz)
 	{}
+
+	inline float& operator[](size_t n)
+	{
+		ASSERT_LOG(n < 3, "vec4: Error index outside bounds");
+		switch(n) {
+		case 0: return x;
+		case 1: return y;
+		case 2: return z;
+		default: break;
+		}
+		return x;
+	}
+
+	inline vec3 operator+=(vec3& n)
+	{
+		x += n.x;
+		y += n.y;
+		z += n.z;
+		return *this;
+	}
 };
 
 inline vec3 operator-(const vec3& lhs, const vec3& rhs)
@@ -46,6 +67,24 @@ struct vec4
 
 	inline vec4(float cx, float cy, float cz, float cw) : x(cx), y(cy), z(cz), w(cw)
 	{}
+
+	const float* get() const
+	{
+		return &x;
+	}
+
+	inline float& operator[](size_t n)
+	{
+		ASSERT_LOG(n < 4, "vec4: Error index outside bounds");
+		switch(n) {
+		case 0: return x;
+		case 1: return y;
+		case 2: return z;
+		case 3: return w;
+		default: break;
+		}
+		return x;
+	}
 };
 
 struct mat4
@@ -58,7 +97,7 @@ struct mat4
 	mat4()
 	{}
 
-	float* get()
+	const float* get() const
 	{
 		return &x.x;
 	}

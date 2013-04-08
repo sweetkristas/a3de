@@ -47,18 +47,11 @@ namespace graphics
 		void create_window(const std::string& title, int x, int y, int w, int h, Uint32 flags);
 		void gl_init();
 		void swap();
-		virtual ~window_manager();
-		
-		const float* model() { return model_.get(); }
-		const float* view() { return view_.get(); }
-		const float* projection() { return projection_.get(); }
+		virtual ~window_manager();	
 	private:
 		SDL_Window* window_;
 		SDL_GLContext glcontext_;
 		int width_;
 		int height_;
-		mat4 model_;
-		mat4 view_;
-		mat4 projection_;
 	};
 }
