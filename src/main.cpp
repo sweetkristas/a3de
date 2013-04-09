@@ -1,6 +1,3 @@
-// button_test.cpp : Defines the entry point for the application.
-//
-
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -9,12 +6,17 @@
 
 #include "filesystem.hpp"
 #include "geometry.hpp"
+#include "notify.hpp"
 #include "obj_reader.hpp"
 #include "profile_timer.hpp"
 #include "shaders.hpp"
+#include "texture.hpp"
 #include "utils.hpp"
 #include "unit_test.hpp"
 #include "wm.hpp"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 
 // Approximate delay between frames.
@@ -139,56 +141,6 @@ void sdl_gl_setup()
 
 namespace graphics
 {
-	#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-	#define SURFACE_MASK 0xFF,0xFF00,0xFF0000,0xFF000000
-	#define SURFACE_MASK_RGB 0xFF,0xFF00,0xFF0000,0x0
-	#else
-	#define SURFACE_MASK 0xFF000000,0xFF0000,0xFF00,0xFF
-	#define SURFACE_MASK_RGB 0xFF0000,0xFF00,0xFF,0x0
-	#endif
-
-	static int power_of_two(int input)
-	{
-		int value = 1;
-
-		while ( value < input ) {
-			value <<= 1;
-		}
-		return value;
-	}
-
-	GLuint ConvertSDLSurfaceToTexture(SDL_Surface *source)
-	{
-		SDL_SetSurfaceBlendMode(source, SDL_BLENDMODE_NONE);
-		int w = power_of_two(source->w);
-		int h = power_of_two(source->h);
-		SDL_Surface *image = SDL_CreateRGBSurface(0, w, h, 32, SURFACE_MASK);
-		ASSERT_LOG(image != NULL, "Couldn't create a temporary surface.");
-
-		SDL_Rect area;
-		area.x = 0;
-		area.y = 0;
-		area.w = source->w;
-		area.h = source->h;
-		SDL_BlitSurface(source, &area, image, &area);
-
-		GLuint t;
-		glGenTextures(1, &t);
-		glBindTexture(GL_TEXTURE_2D, t);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D,
-			0,
-			GL_RGBA,
-			w, h,
-			0,
-			GL_RGBA,
-			GL_UNSIGNED_BYTE,
-			image->pixels);
-		glGenerateMipmap(GL_TEXTURE_2D);
-		SDL_FreeSurface(image);
-		return t;
-	}
 
 	class cube : public reference_counted_ptr
 	{
@@ -196,52 +148,52 @@ namespace graphics
 		cube(shader::program_object_ptr shader)
 			: shader_(shader)
 		{
-			model_ = mat4::identity();
+			model_ = glm::mat4(1.0f);
 			mm_uniform_it_ = shader->get_uniform_iterator("model_matrix");
 			a_position_it_ = shader->get_attribute_iterator("a_position");
 			a_tex_coord_it_ = shader->get_attribute_iterator("a_tex_coord");
 			tex0_it_ = shader->get_uniform_iterator("u_tex0");
 
+			static const GLfloat g_vertex_buffer_data[] = {
+				-1.0f,-1.0f,-1.0f, // triangle 1 : begin
+				-1.0f,-1.0f, 1.0f,
+				-1.0f, 1.0f, 1.0f, // triangle 1 : end
+				1.0f, 1.0f,-1.0f, // triangle 2 : begin
+				-1.0f,-1.0f,-1.0f,
+				-1.0f, 1.0f,-1.0f, // triangle 2 : end
+				1.0f,-1.0f, 1.0f, 
+				-1.0f,-1.0f,-1.0f,
+				1.0f,-1.0f,-1.0f, 
+				1.0f, 1.0f,-1.0f, 
+				1.0f,-1.0f,-1.0f, 
+				-1.0f,-1.0f,-1.0f,
+				-1.0f,-1.0f,-1.0f,
+				-1.0f, 1.0f, 1.0f,
+				-1.0f, 1.0f,-1.0f,
+				1.0f,-1.0f, 1.0f, 
+				-1.0f,-1.0f, 1.0f,
+				-1.0f,-1.0f,-1.0f,
+				-1.0f, 1.0f, 1.0f,
+				-1.0f,-1.0f, 1.0f,
+				1.0f,-1.0f, 1.0f, 
+				1.0f, 1.0f, 1.0f, 
+				1.0f,-1.0f,-1.0f, 
+				1.0f, 1.0f,-1.0f, 
+				1.0f,-1.0f,-1.0f, 
+				1.0f, 1.0f, 1.0f, 
+				1.0f,-1.0f, 1.0f, 
+				1.0f, 1.0f, 1.0f, 
+				1.0f, 1.0f,-1.0f, 
+				-1.0f, 1.0f,-1.0f,
+				1.0f, 1.0f, 1.0f, 
+				-1.0f, 1.0f,-1.0f,
+				-1.0f, 1.0f, 1.0f,
+				1.0f, 1.0f, 1.0f, 
+				-1.0f, 1.0f, 1.0f,
+				1.0f,-1.0f, 1.0f,
+			};
 			glGenBuffers(1, &vertex_array_);
 			glBindBuffer(GL_ARRAY_BUFFER, vertex_array_);
-			static const GLfloat g_vertex_buffer_data[] = {
-				-1.0f,-1.0f,-1.0f, 1.0f, // triangle 1 : begin
-				-1.0f,-1.0f, 1.0f, 1.0f, 
-				-1.0f, 1.0f, 1.0f, 1.0f, // triangle 1 : end
-				1.0f, 1.0f,-1.0f, 1.0f, // triangle 2 : begin
-				-1.0f,-1.0f,-1.0f, 1.0f, 
-				-1.0f, 1.0f,-1.0f, 1.0f, // triangle 2 : end
-				1.0f,-1.0f, 1.0f, 1.0f, 
-				-1.0f,-1.0f,-1.0f, 1.0f, 
-				1.0f,-1.0f,-1.0f, 1.0f, 
-				1.0f, 1.0f,-1.0f, 1.0f, 
-				1.0f,-1.0f,-1.0f, 1.0f, 
-				-1.0f,-1.0f,-1.0f, 1.0f, 
-				-1.0f,-1.0f,-1.0f, 1.0f, 
-				-1.0f, 1.0f, 1.0f, 1.0f, 
-				-1.0f, 1.0f,-1.0f, 1.0f, 
-				1.0f,-1.0f, 1.0f, 1.0f, 
-				-1.0f,-1.0f, 1.0f, 1.0f, 
-				-1.0f,-1.0f,-1.0f, 1.0f, 
-				-1.0f, 1.0f, 1.0f, 1.0f, 
-				-1.0f,-1.0f, 1.0f, 1.0f, 
-				1.0f,-1.0f, 1.0f, 1.0f, 
-				1.0f, 1.0f, 1.0f, 1.0f, 
-				1.0f,-1.0f,-1.0f, 1.0f, 
-				1.0f, 1.0f,-1.0f, 1.0f, 
-				1.0f,-1.0f,-1.0f, 1.0f, 
-				1.0f, 1.0f, 1.0f, 1.0f, 
-				1.0f,-1.0f, 1.0f, 1.0f, 
-				1.0f, 1.0f, 1.0f, 1.0f, 
-				1.0f, 1.0f,-1.0f, 1.0f, 
-				-1.0f, 1.0f,-1.0f, 1.0f, 
-				1.0f, 1.0f, 1.0f, 1.0f, 
-				-1.0f, 1.0f,-1.0f, 1.0f, 
-				-1.0f, 1.0f, 1.0f, 1.0f, 
-				1.0f, 1.0f, 1.0f, 1.0f, 
-				-1.0f, 1.0f, 1.0f, 1.0f, 
-				1.0f,-1.0f, 1.0f, 1.0f
-			};
 			glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
 
@@ -288,65 +240,62 @@ namespace graphics
 			glBindBuffer(GL_ARRAY_BUFFER, uvbuffer_);
 			glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
-			SDL_Surface* surf = IMG_Load("images/uvtemplate.png");
-			ASSERT_LOG(surf != NULL, "Failed to load image: images/uvtemplate.png " << IMG_GetError());
-			tex_id_ = ConvertSDLSurfaceToTexture(surf);
-			SDL_FreeSurface(surf);
+			tex_ = graphics::texture::get("images/uvtemplate.png");
 		}
 
 		virtual ~cube()
 		{
 			glDeleteBuffers(1, &vertex_array_);
 			glDeleteBuffers(1, &uvbuffer_);
-			glDeleteTextures(1, &tex_id_);
 		}
 
-		void draw(GLuint vbos[2], int n) const
+		void draw() const
 		{
-			shader_->set_uniform(mm_uniform_it_, model_.get());
+			shader_->set_uniform(mm_uniform_it_, &model_[0][0]);
 
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, tex_id_);
+			glBindTexture(GL_TEXTURE_2D, tex_->id());
 			glUniform1i(tex0_it_->second.location, 0);
 
 			glEnableVertexAttribArray(a_position_it_->second.location);
 			glBindBuffer(GL_ARRAY_BUFFER, vertex_array_);
 			glVertexAttribPointer(
 				a_position_it_->second.location, // The attribute we want to configure
-				4,                  // size
+				3,                  // size
 				GL_FLOAT,           // type
 				GL_FALSE,           // normalized?
 				0,                  // stride
 				(void*)0            // array buffer offset
 			);
-			glDrawArrays(GL_TRIANGLES, 0, 12*3);
-			glDisableVertexAttribArray(0);
 
-			//glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
-			//glEnableVertexAttribArray(a_position_it_->second.location);
-			//glVertexAttribPointer(a_position_it_->second.location,
-			//	4,
-			//	GL_FLOAT,
-			//	GL_FALSE,
-			//	0,
-			//	0);
-			//glDrawElements(GL_TRIANGLES, n, GL_UNSIGNED_SHORT, 0);			
-			//glDisableVertexAttribArray(a_position_it_->second.location);
+			glEnableVertexAttribArray(a_tex_coord_it_->second.location);
+			glBindBuffer(GL_ARRAY_BUFFER, uvbuffer_);
+			glVertexAttribPointer(
+				a_tex_coord_it_->second.location, // The attribute we want to configure
+				2,                            // size : U+V => 2
+				GL_FLOAT,                     // type
+				GL_FALSE,                     // normalized?
+				0,                            // stride
+				(void*)0                      // array buffer offset
+			);
+
+			glDrawArrays(GL_TRIANGLES, 0, 12*3);
+			glDisableVertexAttribArray(a_position_it_->second.location);
+			glDisableVertexAttribArray(a_tex_coord_it_->second.location);
 		}
 	protected:
 	private:
-		mat4 model_;
+		glm::mat4 model_;
 		shader::program_object_ptr shader_;
 		shader::const_actives_map_iterator mm_uniform_it_;
 		shader::const_actives_map_iterator a_position_it_;
 		shader::const_actives_map_iterator a_tex_coord_it_;
 		shader::const_actives_map_iterator tex0_it_;
-		//shader::const_actives_map_iterator a_color_it_;
-		//shader::const_actives_map_iterator u_color_it_;
 
 		GLuint vertex_array_;
 		GLuint uvbuffer_;
-		GLuint tex_id_;
+
+		graphics::const_texture_ptr tex_;
 	};
 
 	typedef boost::intrusive_ptr<cube> cube_ptr;
@@ -360,30 +309,15 @@ namespace graphics
 		{
 			obj::load_obj_file("data/test/cube.obj", cube_);
 
-			eye_ = vec3(4.0f,3.0f,10.0f);
-
-			//projection_ = perspective(45.0f, float(w)/float(h), 0.1f, 100.0f);
-			projection_ = mat4::identity();
-			view_ = look_at(eye_, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-
-			// Create vertex buffer object for vertex array.
-			glGenBuffers(2, cube_vbos_);
-			glBindBuffer(GL_ARRAY_BUFFER, cube_vbos_[0]);
-			glBufferData(GL_ARRAY_BUFFER, 
-				cube_.vertices.size()*sizeof(vec4), 
-				&cube_.vertices[0], 
-				GL_STATIC_DRAW);
-
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_vbos_[1]);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-				cube_.face_vertex_index.size()*sizeof(GLushort), 
-				&cube_.face_vertex_index[0], 
-				GL_STATIC_DRAW);
+			eye_ = glm::vec3(4.0f,3.0f,3.0f);
+			view_ = glm::lookAt(eye_, 
+				glm::vec3(0.0f, 0.0f, 0.0f), 
+				glm::vec3(0.0f, 1.0f, 0.0f));
+			projection_ = glm::perspective(45.0f, float(w)/float(h), 0.1f, 100.0f);
 		}
 
 		virtual ~render()
 		{
-			glDeleteBuffers(2, cube_vbos_);
 		}
 
 		shader::program_object_ptr create_shader(const std::string& name, 
@@ -433,7 +367,7 @@ namespace graphics
 				if(it->second.size() != 0) {
 					it->first->make_active();
 					for(auto obj = it->second.begin(); obj != it->second.end(); ++obj) {
-						(*obj)->draw(cube_vbos_, cube_.face_vertex_index.size());
+						(*obj)->draw();
 					}
 				}
 			}
@@ -441,34 +375,35 @@ namespace graphics
 
 		void view_change(float dx, float dy, float dz)
 		{
-			eye_ += vec3(dx, dy, dz);
+			eye_ += glm::vec3(dx, dy, dz);
 			if(eye_.z > 10) {
 				eye_.z = 10;
 			}
 			if(eye_.z < -10) {
 				eye_.z = -10;
 			}
-			view_ = look_at(eye_, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+			view_ = glm::lookAt(eye_, 
+				glm::vec3(0.0f, 0.0f, 0.0f), 
+				glm::vec3(0.0f, 1.0f, 0.0f));
 
 			for(auto it = shaders_.begin(); it != shaders_.end(); ++it) {
 				it->second.shader->set_uniform(it->second.vm_uniform_it, view());
 			}
 		}
 
-		const float* view() { return view_.get(); }
-		const float* projection() { return projection_.get(); }
+		const float* view() { return &view_[0][0]; }
+		const float* projection() { return &projection_[0][0]; }
 	protected:
 	private:
 		obj::obj_data cube_;
-		GLuint cube_vbos_[2];
 
 		int width_;
 		int height_;
 
-		mat4 view_;
-		mat4 projection_;
+		glm::mat4 view_;
+		glm::mat4 projection_;
 
-		vec3 eye_;
+		glm::vec3 eye_;
 
 		graphics::window_manager& wm_;
 
@@ -652,12 +587,45 @@ namespace graphics
 
 //}
 
+void file_change(const std::string& file, const boost::asio::dir_monitor_event& ev)
+{
+	if(ev.type == boost::asio::dir_monitor_event::modified) {
+		std::cerr << "FILE MODIFIED: " << file << std::endl;
+	} else if(ev.type == boost::asio::dir_monitor_event::added) {
+		std::cerr << "FILE ADDED: " << file << std::endl;
+	} else if(ev.type == boost::asio::dir_monitor_event::removed) {
+		std::cerr << "FILE REMOVED: " << file << std::endl;
+	}
+}
+
+void dump_glm_mat4(const std::string& name, const glm::mat4& m)
+{
+	std::cerr << name << std::endl;
+	for(int j = 0; j != m.col_size(); ++j) {
+		std::cerr << "[";
+		for(int i = 0; i != m.row_size(); ++i) {
+			std::cerr << " " << m[i][j];
+		}
+		std::cerr << " ]" << std::endl;
+	}
+}
+
 int main(int argc, char* argv[]) 
 {
 	std::vector<std::string> args;
 	for(int i = 0; i < argc; ++i) {
 		args.push_back(argv[i]);
 	}
+
+	glm::mat4 view_m = glm::lookAt(glm::vec3(4.0f, 3.0f, 3.0f), 
+		glm::vec3(0.0f, 0.0f, 0.0f), 
+		glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 proj_m = glm::perspective(45.0f, 5.0f/3.0f, 0.1f, 100.0f);
+	glm::mat4 model_m = glm::mat4(1.0f);
+	glm::mat4 mvp = proj_m * view_m * model_m;
+	dump_glm_mat4("glm::proj_m", proj_m);
+	dump_glm_mat4("glm::view", view_m);
+	dump_glm_mat4("glm::mvp", mvp);
 
 	point window_size = point(800, 480);
 
@@ -669,12 +637,13 @@ int main(int argc, char* argv[])
 		graphics::SDL sdl(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 		graphics::window_manager wm;
 		sdl_gl_setup();
-		wm.create_window("Button position test", 
+		wm.create_window("a3de", 
 			SDL_WINDOWPOS_CENTERED, 
 			SDL_WINDOWPOS_CENTERED, 
 			window_size.x, 
 			window_size.y, 
 			SDL_WINDOW_OPENGL);
+		wm.set_icon("images/icon.png");
 		wm.gl_init();
 
 		graphics::render render_obj(wm, window_size.x, window_size.y);
@@ -692,8 +661,15 @@ int main(int argc, char* argv[])
 			}
 		}*/
 
+		notify::manager notifications;
+		notifications.register_notification_path("data/", file_change);
+		notifications.register_notification_path("images/", file_change);
+
 		SDL_Event e = {0};
 		bool running = true;
+		Uint32 start_time = SDL_GetTicks();
+		uint64_t render_acc = 0;
+		int render_cnt = 0;
 		while(running) {
 			Uint32 cycle_start_tick = SDL_GetTicks();
 			SDL_PollEvent(&e);
@@ -721,12 +697,27 @@ int main(int argc, char* argv[])
 
 			render_obj.draw();
 			wm.swap();
+
 			Uint32 delay = SDL_GetTicks() - cycle_start_tick;
+
+			render_acc += delay;
+			render_cnt++;
+			Uint32 current_time = SDL_GetTicks();
+			if(current_time - start_time >= 1000) {
+				std::cerr << "Average processing time: " << double(render_acc)/double(render_cnt) << " ms" << std::endl;
+
+				start_time = current_time;
+				render_cnt = 0;
+				render_acc = 0;
+			}
+
 			if(delay > FRAME_RATE) {
 				std::cerr << "CYCLE TOO LONG: " << delay << std::endl;
 			} else {
 				SDL_Delay(FRAME_RATE - delay);
 			}
+
+			notifications.poll();
 		}
 
 		return 0;

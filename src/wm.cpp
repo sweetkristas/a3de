@@ -1,3 +1,4 @@
+#include <iostream>
 #include <sstream>
 #include <vector>
 #include "graphics.hpp"
@@ -33,6 +34,17 @@ namespace graphics
 		height_ = h;
 	}
 
+	void window_manager::set_icon(const std::string& icon)
+	{
+		SDL_Surface* img = IMG_Load(icon.c_str());
+		if(img) {
+			SDL_SetWindowIcon(window_, img);
+			SDL_FreeSurface(img);
+		} else {
+			std::cerr << "Unable to load icon: " << icon << std::endl;
+		}
+	}
+
 	void window_manager::gl_init()
 	{
 		glcontext_ = SDL_GL_CreateContext(window_);
@@ -49,10 +61,11 @@ namespace graphics
 		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 		// Enable depth test
-		//glEnable(GL_DEPTH_TEST);
-		
+		glEnable(GL_DEPTH_TEST);
 		// Accept fragment if it closer to the camera than the former one
-		//glDepthFunc(GL_LESS);
+		glDepthFunc(GL_LESS); 
+		// Cull triangles which normal is not towards the camera
+		glEnable(GL_CULL_FACE);
 	}
 
 	void window_manager::swap() 

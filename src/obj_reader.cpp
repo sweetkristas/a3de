@@ -37,7 +37,7 @@ namespace obj
 			std::string symbol;
 			ss >> symbol;
 			if(symbol == "v") {
-				vec4 vertex(0.0f, 0.0f, 0.0f, 1.0f);
+				glm::vec4 vertex(0.0f, 0.0f, 0.0f, 1.0f);
 				boost::smatch what;
 				if(boost::regex_match(line, what, re_v)) {
 					for(int n = 1; n !=	what.size(); ++n) {
@@ -48,7 +48,7 @@ namespace obj
 				}
 				o.vertices.push_back(vertex);
 			} else if(symbol == "vt") {
-				vec3 uvw(0.0f, 0.0f, 0.0f);
+				glm::vec3 uvw(0.0f, 0.0f, 0.0f);
 				boost::smatch what;
 				if(boost::regex_match(line, what, re_vt)) {
 					for(int n = 1; n !=	what.size(); ++n) {
@@ -59,7 +59,7 @@ namespace obj
 				}
 				o.uvs.push_back(uvw);
 			} else if(symbol == "vn") {
-				vec3 normal(0.0f, 0.0f, 0.0f);
+				glm::vec3 normal(0.0f, 0.0f, 0.0f);
 				boost::smatch what;
 				if(boost::regex_match(line, what, re_vn)) {
 					for(int n = 1; n !=	what.size(); ++n) {
@@ -70,7 +70,7 @@ namespace obj
 				}
 				o.normals.push_back(normal);
 			} else if(symbol == "vp") {
-				vec3 psv(0.0f, 0.0f, 0.0f);
+				glm::vec3 psv(0.0f, 0.0f, 0.0f);
 				boost::smatch what;
 				if(boost::regex_match(line, what, re_vn)) {
 					for(int n = 1; n !=	what.size(); ++n) {

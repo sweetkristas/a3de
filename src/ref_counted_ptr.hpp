@@ -22,13 +22,13 @@ public:
 	{}
 	virtual ~reference_counted_ptr()
 	{}
-	void add_reference() { ++references_; }
-	void release_reference() 
+	void add_reference() const { ++references_; }
+	void release_reference() const
 	{ 
 			if(--references_ == 0) { 
 				delete this;
 			}
 	}
 private:
-	long references_;
+	mutable long references_;
 };

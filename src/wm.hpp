@@ -1,7 +1,6 @@
 #pragma once
 
 #include "graphics.hpp"
-#include "vecs.hpp"
 
 namespace graphics
 {
@@ -46,6 +45,7 @@ namespace graphics
 		window_manager();
 		void create_window(const std::string& title, int x, int y, int w, int h, Uint32 flags);
 		void gl_init();
+		void set_icon(const std::string& icon);
 		void swap();
 		virtual ~window_manager();	
 	private:
