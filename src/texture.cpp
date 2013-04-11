@@ -17,11 +17,8 @@ namespace graphics
 			return value;
 		}
 
-		GLuint load_file_into_texture(const std::string& fname)
+		GLuint texture_from_surface(SDL_Surface* source)
 		{
-			SDL_Surface* source = IMG_Load(fname.c_str());
-			ASSERT_LOG(source != NULL, "Failed to load image: " << fname << " : " << IMG_GetError());
-
 			SDL_SetSurfaceBlendMode(source, SDL_BLENDMODE_NONE);
 
 			int w = power_of_two(source->w);
@@ -34,7 +31,13 @@ namespace graphics
 			area.y = 0;
 			area.w = source->w;
 			area.h = source->h;
-			SDL_BlitSurface(source, &area, image, &area);
+			//SDL_BlitSurface(source, &area, image, &area);
+			SDL_Rect image_area;
+			image_area.x = 0;
+			image_area.y = 0;
+			image_area.w = w;
+			image_area.h = h;
+			SDL_BlitSurface(source, &area, image, &image_area);
 
 			GLuint t;
 			glGenTextures(1, &t);
@@ -51,8 +54,14 @@ namespace graphics
 				image->pixels);
 			glGenerateMipmap(GL_TEXTURE_2D);
 			SDL_FreeSurface(image);
-			SDL_FreeSurface(source);
 			return t;
+		}
+
+		GLuint load_file_into_texture(const std::string& fname)
+		{
+			SDL_Surface* source = IMG_Load(fname.c_str());
+			ASSERT_LOG(source != NULL, "Failed to load image: " << fname << " : " << IMG_GetError());
+			return texture_from_surface(source);
 		}
 
 		std::map<std::string, texture_ptr>& texture_cache()
@@ -73,6 +82,11 @@ namespace graphics
 		tex_id_ = load_file_into_texture(fname);
 	}
 
+	texture::texture(surface_ptr s)
+	{
+		tex_id_ = texture_from_surface(s.get());
+	}
+
 	const_texture_ptr texture::get(const std::string& fname)
 	{
 		auto it = texture_cache().find(fname);
@@ -82,6 +96,11 @@ namespace graphics
 			return t;
 		}
 		return it->second;
+	}
+
+	const_texture_ptr texture::get(surface_ptr s)
+	{
+		return new texture(s);
 	}
 
 	void texture::rebuild_cache()

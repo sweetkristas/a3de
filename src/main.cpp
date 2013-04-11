@@ -5,7 +5,9 @@
 #include <boost/shared_ptr.hpp>
 
 #include "filesystem.hpp"
+#include "fonts.hpp"
 #include "geometry.hpp"
+#include "module.hpp"
 #include "notify.hpp"
 #include "obj_reader.hpp"
 #include "render.hpp"
@@ -127,11 +129,17 @@ void draw_rect(const rect& r, GLint vertex_attribute_index)
 
 void sdl_gl_setup()
 {
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 1);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    //SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
+    //SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
+    //SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
+    //SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 1);
+
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 }
@@ -155,7 +163,9 @@ int main(int argc, char* argv[])
 		args.push_back(argv[i]);
 	}
 
-	point window_size = point(800, 480);
+	module::load_module("test");
+
+	point window_size = point(1024, 768);
 
 	try {
 		if(test::run_tests() == false) {
@@ -174,14 +184,38 @@ int main(int argc, char* argv[])
 		wm.set_icon("images/icon.png");
 		wm.gl_init();
 
+		font::manager font_manager;
+
 		graphics::render render_obj(wm, window_size.x, window_size.y);
 		auto shader = render_obj.create_shader("simple", 
 			"simple_vertex", "data/simple_color.vert", 
 			"simple_fragment", "data/simple_color.frag");
-		render_obj.add_cube(shader, new graphics::cube_model("images/uvtemplate.png"));
-		graphics::cube_model_ptr xx = graphics::cube_model_ptr(new graphics::cube_model("images/uvtemplate.png"));
-		xx->translate(-2.0f, 0.0f, 0.0f);
-		render_obj.add_cube(shader, xx);
+
+		std::vector<std::vector<std::vector<graphics::cube_model_ptr> > > chunk;
+		chunk.resize(4);
+		for(size_t n = 0; n != chunk.size(); ++n) {
+			chunk[n].resize(4);
+			for(size_t m = 0; m != chunk[n].size(); ++m) {
+				chunk[n][m].resize(4);
+				for(size_t p = 0; p != chunk[n][m].size(); ++p) {
+					chunk[n][m][p] = graphics::cube_model_ptr(new graphics::cube_model("images/test_image_32x32.png"));
+					chunk[n][m][p]->translate(2.0f*n, -2.0f*p, 2.0f*m);
+					chunk[n][m][p]->set_neighbourhood(
+						n != chunk.size()-1,
+						n != 0,
+						m != chunk[n].size()-1,
+						m != 0,
+						p != chunk[n][m].size()-1,
+						p != 0);
+					render_obj.add_cube(shader, chunk[n][m][p]);
+				}
+			}
+		}
+		
+		//render_obj.add_cube(shader, new graphics::cube_model("images/uvtemplate.png"));
+		//graphics::cube_model_ptr xx = graphics::cube_model_ptr(new graphics::cube_model("images/uvtemplate.png"));
+		//xx->translate(2.0f, 0.0f, 0.0f);
+		//render_obj.add_cube(shader, xx);
 
 		/*std::vector<std::vector<std::vector<uint8_t> > > chunk;
 		chunk.resize(256);
@@ -193,8 +227,8 @@ int main(int argc, char* argv[])
 		}*/
 
 		notify::manager notifications;
-		notifications.register_notification_path("data/", file_change);
-		notifications.register_notification_path("images/", file_change);
+		//notify::register_notification_path("data/", file_change);
+		//notify::register_notification_path("images/", file_change);
 
 		SDL_Event e = {0};
 		bool running = true;

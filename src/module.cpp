@@ -40,8 +40,14 @@ namespace module
 
 	std::string map_file(const std::string& file)
 	{
-		ASSERT_LOG(get_module_info().empty(), "No module loaded.");
+		ASSERT_LOG(get_module_info().size() != 0, "No module loaded.");
 		path fpath = get_module_info().back().base / file;
 		return fpath.string();
+	}
+
+	void get_unique_files(const std::string& path, sys::file_path_map& fpm)
+	{
+		sys::get_unique_files(path, fpm);
+		sys::get_unique_files(map_file(path), fpm);
 	}
 }

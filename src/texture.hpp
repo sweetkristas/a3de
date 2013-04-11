@@ -1,5 +1,7 @@
 #pragma once
 
+#include <boost/shared_ptr.hpp>
+
 #include "graphics.hpp"
 #include "ref_counted_ptr.hpp"
 
@@ -17,16 +19,20 @@ namespace graphics
 	typedef boost::intrusive_ptr<texture> texture_ptr;
 	typedef boost::intrusive_ptr<const texture> const_texture_ptr;
 
+	typedef boost::shared_ptr<SDL_Surface> surface_ptr;
+
 	class texture : public reference_counted_ptr
 	{
 	public:
 		GLuint id() const { return tex_id_; }
 
 		static const_texture_ptr get(const std::string& fname);
+		static const_texture_ptr get(surface_ptr);
 		static void rebuild_cache();
 	protected:
 		texture();
 		explicit texture(const std::string& fname);
+		explicit texture(surface_ptr);
 	private:
 		std::string name_;
 		GLuint tex_id_;

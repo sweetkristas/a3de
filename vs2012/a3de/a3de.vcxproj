@@ -26,7 +26,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -42,18 +42,22 @@
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>c:\Projects\glm-0.9.4.3;../../../boost;../../../SDL/include;../../../SDL_image;../../../lua/src;../../../glee/DATA/output;c:/Projects/a3de/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../glm-0.9.4.3;../../../boost;../../../SDL/include;../../../SDL_image;../../../SDL_ttf;../../../lua/src;../../../glee/DATA/output;c:/Projects/a3de/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;SDL.lib;SDLmain.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>../../../SDL/VisualC/SDLmain/$(Platform)/$(Configuration);../../../SDL/VisualC/SDL/$(Platform)/$(Configuration);../../../boost/stage32-debug-static/lib;../../../SDL_image/VisualC/Win32/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;SDL.lib;SDLmain.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../../SDL/VisualC/SDLmain/$(Platform)/$(Configuration);../../../SDL/VisualC/SDL/$(Platform)/$(Configuration);../../../boost/stage32-debug-static/lib;../../../SDL_image/VisualC/Win32/Release;../../../SDL_ttf/VisualC/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <EntryPointSymbol>
       </EntryPointSymbol>
@@ -65,11 +69,17 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../../glm-0.9.4.3;../../../boost;../../../SDL/include;../../../SDL_image;../../../lua/src;../../../SDL_ttf;../../../glee/DATA/output;c:/Projects/a3de/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>../../../SDL_ttf/VisualC/$(Configuration);../../../SDL/VisualC/SDLmain/$(Platform)/$(Configuration);../../../SDL/VisualC/SDL/$(Platform)/$(Configuration);../../../boost/stage32-release-static/lib;../../../SDL_image/VisualC/$(Platform)/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;SDL.lib;SDLmain.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -105,6 +115,7 @@
     <ClCompile Include="..\..\..\lua\src\lundump.c" />
     <ClCompile Include="..\..\..\lua\src\lvm.c" />
     <ClCompile Include="..\..\..\lua\src\lzio.c" />
+    <ClCompile Include="..\..\src\fonts.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\filesystem.cpp" />
     <ClCompile Include="..\..\src\geometry.cpp" />
@@ -115,6 +126,7 @@
     <ClCompile Include="..\..\src\notify.cpp" />
     <ClCompile Include="..\..\src\obj_reader.cpp" />
     <ClCompile Include="..\..\src\render.cpp" />
+    <ClCompile Include="..\..\src\render_text.cpp" />
     <ClCompile Include="..\..\src\shaders.cpp" />
     <ClCompile Include="..\..\src\texture.cpp" />
     <ClCompile Include="..\..\src\unit_test.cpp" />
@@ -124,6 +136,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\asserts.hpp" />
     <ClInclude Include="..\..\src\dir_monitor.hpp" />
+    <ClInclude Include="..\..\src\fonts.hpp" />
     <ClInclude Include="..\..\src\notify.hpp" />
     <ClInclude Include="..\..\src\filesystem.hpp" />
     <ClInclude Include="..\..\src\formatter.hpp" />
@@ -137,6 +150,7 @@
     <ClInclude Include="..\..\src\profile_timer.hpp" />
     <ClInclude Include="..\..\src\ref_counted_ptr.hpp" />
     <ClInclude Include="..\..\src\render.hpp" />
+    <ClInclude Include="..\..\src\render_text.hpp" />
     <ClInclude Include="..\..\src\shaders.hpp" />
     <ClInclude Include="..\..\src\targetver.h" />
     <ClInclude Include="..\..\src\texture.hpp" />

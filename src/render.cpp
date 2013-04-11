@@ -91,6 +91,43 @@ namespace graphics
 			0.666666f, 0.666666f,
 		};
 
+		/*static const GLfloat cube_vertex_buffer_data[] = {
+			// Front face
+			-1,-1,1, 1,-1,1, -1,1,1, 1,1,1,
+			// Right face
+			1,1,1, 1,-1,1, 1,1,-1, 1,-1,-1,
+			// Back face
+			1,-1,-1, -1,-1,-1, 1,1,-1, -1,1,-1,
+			// Left face
+			-1,1,-1, -1,-1,-1, -1,1,1, -1,-1,1,
+			// Bottom face
+			-1,-1,1, -1,-1,-1, 1,-1,1, 1,-1,-1,
+       
+			// move to top
+			1,-1,-1, -1,1,1,
+
+			// Top Face
+			-1,1,1, 1,1,1, -1,1,-1, 1,1,-1
+		};
+
+		static const GLfloat cube_uv_buffer_data[] = {
+			// Front face
+			0,0, 1,0, 0,1, 1,1,
+			// Right face
+			0,1, 0,0, 1,1, 1,0,
+			// Back face
+			0,0, 1,0, 0,1, 1,1,
+			// Left face
+			0,1, 0,0, 1,1, 1,0,
+			// Bottom face
+			0,1, 0,0, 1,1, 1,0,
+       
+			1,0, 0,0,
+       
+			// Top face
+			0,0, 1,0, 0,1, 1,1
+		};*/
+
 		static const int num_array_buffers = 2;
 
 		struct cube_array_buffer_deleter
@@ -136,6 +173,10 @@ namespace graphics
 
 		void draw(cube_model_ptr cm) const
 		{
+			if(cm->is_fully_occluded()) {
+				return;
+			}
+
 			shader_->set_uniform(mm_uniform_it_, &cm->model()[0][0]);
 
 			glActiveTexture(GL_TEXTURE0);
@@ -165,6 +206,7 @@ namespace graphics
 			);
 
 			glDrawArrays(GL_TRIANGLES, 0, 12*3);
+			//glDrawArrays(GL_TRIANGLES, 0, 26);
 			glDisableVertexAttribArray(a_position_it_->second.location);
 			glDisableVertexAttribArray(a_tex_coord_it_->second.location);
 		}
@@ -216,10 +258,27 @@ namespace graphics
 		return tex_->id();
 	}
 
+	void cube_model::set_neighbourhood(int px, int nx, int py, int ny, int pz, int nz)
+	{
+		pos_x_neighbour_ = px;
+		neg_x_neighbour_ = nx;
+		pos_y_neighbour_ = py;
+		neg_y_neighbour_ = ny;
+		pos_z_neighbour_ = pz;
+		neg_z_neighbour_ = nz;
+	}
+
+	bool cube_model::is_fully_occluded()
+	{
+		return pos_x_neighbour_ && neg_x_neighbour_ 
+			&& pos_y_neighbour_ && neg_y_neighbour_ 
+			&& pos_z_neighbour_ && neg_z_neighbour_;
+	}
+
 	render::render(graphics::window_manager& wm, int w, int h) 
 			: wm_(wm), width_(w), height_(h)
 	{
-		eye_ = glm::vec3(4.0f,3.0f,3.0f);
+		eye_ = glm::vec3(10.0f,-10.0f,10.0f);
 		view_ = glm::lookAt(eye_, 
 			glm::vec3(0.0f, 0.0f, 0.0f), 
 			glm::vec3(0.0f, 1.0f, 0.0f));

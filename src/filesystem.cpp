@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 #include <boost/filesystem.hpp>
 
 #include "asserts.hpp"
@@ -38,5 +39,22 @@ namespace sys
 		// Write the file.
 		std::ofstream file(name, std::ios_base::binary);
 		file << data;
+	}
+
+	void get_unique_files(const std::string& name, file_path_map& fpm)
+	{
+		path p(name);
+		if(exists(p)) {
+			ASSERT_LOG(is_directory(p) || is_other(p), "get_unique_files() not directory: " << name);
+			for(auto it = directory_iterator(p); it != directory_iterator(); ++ it) {
+				if(is_regular_file(it->path())) {
+					fpm[it->path().filename().generic_string()] = it->path().generic_string();
+				} else {
+					get_unique_files(it->path().generic_string(), fpm);
+				}
+			}
+		} else {
+			std::cerr << "WARNING: path " << p.generic_string() << " doesn't exit" << std::endl;
+		}
 	}
 }

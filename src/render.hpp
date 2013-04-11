@@ -22,9 +22,17 @@ namespace graphics
 		void rotate(float angle, const glm::vec3& axis);
 		glm::mat4& model() const;
 		GLuint tex_id() const;
+		void set_neighbourhood(int px, int nx, int py, int ny, int pz, int nz);
+		bool is_fully_occluded();
 	private:
 		mutable glm::mat4 model_;
 		const_texture_ptr tex_;
+		uint8_t pos_x_neighbour_ : 1;
+		uint8_t neg_x_neighbour_ : 1;
+		uint8_t pos_y_neighbour_ : 1;
+		uint8_t neg_y_neighbour_ : 1;
+		uint8_t pos_z_neighbour_ : 1;
+		uint8_t neg_z_neighbour_ : 1;
 	};
 	typedef boost::intrusive_ptr<cube_model> cube_model_ptr;
 	typedef boost::intrusive_ptr<const cube_model> const_cube_model_ptr;

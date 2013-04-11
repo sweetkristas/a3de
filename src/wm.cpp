@@ -2,6 +2,7 @@
 #include <sstream>
 #include <vector>
 #include "graphics.hpp"
+#include "profile_timer.hpp"
 #include "wm.hpp"
 
 namespace graphics
@@ -24,6 +25,7 @@ namespace graphics
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
+		profile::manager prof("SDL_CreateWindow");
 		window_ = SDL_CreateWindow(title.c_str(), x, y, w, h, flags);
 		if(!window_) {
 			std::stringstream ss;
@@ -47,6 +49,7 @@ namespace graphics
 
 	void window_manager::gl_init()
 	{
+		profile::manager prof("SDL_GL_CreateContext");
 		glcontext_ = SDL_GL_CreateContext(window_);
 
 		glEnable(GL_BLEND);

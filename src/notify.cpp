@@ -11,8 +11,13 @@
 
 namespace notify
 {
+	namespace
+	{
+		boost::asio::io_service io_service;
+		boost::asio::dir_monitor dm(io_service);
+	}
+
 	manager::manager()
-		: dm_(io_service_)
 	{
 	}
 
@@ -20,14 +25,7 @@ namespace notify
 	{
 	}
 
-	void manager::register_notification_path(const std::string& name, 
-		boost::function<void(const std::string&, const boost::asio::dir_monitor_event&)> fn)
-	{
-		dm_.add_directory(name);
-		dm_.async_monitor(boost::bind(&manager::handler, this, fn, _1, _2));
-	}
-
-	void manager::handler(boost::function<void(const std::string&, const boost::asio::dir_monitor_event&)> fn, 
+	void handler(boost::function<void(const std::string&, const boost::asio::dir_monitor_event&)> fn, 
 		const boost::system::error_code& ec, 
 		const boost::asio::dir_monitor_event &ev)
 	{
@@ -39,12 +37,19 @@ namespace notify
 		if(boost::filesystem::is_regular_file(p)) {
 			fn(p.generic_string(), ev);
 		}
-		dm_.async_monitor(boost::bind(&manager::handler, this, fn, _1, _2));		
+		dm.async_monitor(boost::bind(&handler, fn, _1, _2));		
+	}
+
+	void register_notification_path(const std::string& name, 
+		boost::function<void(const std::string&, const boost::asio::dir_monitor_event&)> fn)
+	{
+		dm.add_directory(name);
+		dm.async_monitor(boost::bind(&handler, fn, _1, _2));
 	}
 
 	void manager::poll()
 	{
-		io_service_.reset();
-		io_service_.poll();
+		io_service.reset();
+		io_service.poll();
 	}
 }
