@@ -1,11 +1,13 @@
 #pragma once
 
+#include "color.hpp"
 #include "fonts.hpp"
+#include "shaders.hpp"
 #include "texture.hpp"
 
 namespace graphics
 {
-	namespace render
+	namespace renderer
 	{
 		class text
 		{
@@ -17,9 +19,9 @@ namespace graphics
 		private:
 			text();
 			std::string str_;
-			SDL_Color color_;
+			color color_;
 			font::font_ptr font_;
-			texture_ptr tex_;
+			const_texture_ptr tex_;
 		};
 	}
 }

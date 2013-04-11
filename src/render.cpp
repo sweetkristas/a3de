@@ -7,6 +7,7 @@
 #include "graphics.hpp"
 #include "profile_timer.hpp"
 #include "render.hpp"
+#include "render_text.hpp"
 
 
 namespace graphics
@@ -275,6 +276,15 @@ namespace graphics
 			&& pos_z_neighbour_ && neg_z_neighbour_;
 	}
 
+	namespace
+	{
+		shader::program_object_ptr tex2d_shader;
+		shader::const_actives_map_iterator tex2d_u_color_it;
+		shader::const_actives_map_iterator tex2d_u_texmap_it;
+		shader::const_actives_map_iterator tex2d_a_position_it;
+		shader::const_actives_map_iterator tex2d_a_texcoord_it;
+	}
+
 	render::render(graphics::window_manager& wm, int w, int h) 
 			: wm_(wm), width_(w), height_(h)
 	{
@@ -283,6 +293,14 @@ namespace graphics
 			glm::vec3(0.0f, 0.0f, 0.0f), 
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		projection_ = glm::perspective(45.0f, float(w)/float(h), 0.1f, 100.0f);
+
+		tex2d_shader.reset(new shader::program_object("texture_shader_2d",
+			shader::shader(GL_VERTEX_SHADER, "texture_2d_vert", sys::read_file("data/texture_2d.vert")),
+			shader::shader(GL_FRAGMENT_SHADER, "texture_2d_frag", sys::read_file("data/texture_2d.frag"))));
+		tex2d_u_color_it = tex2d_shader->get_uniform_iterator("u_color");
+		tex2d_u_texmap_it = tex2d_shader->get_uniform_iterator("u_tex_map");
+		tex2d_a_position_it = tex2d_shader->get_attribute_iterator("a_position");
+		tex2d_a_texcoord_it = tex2d_shader->get_attribute_iterator("a_texcoord");
 	}
 
 	render::~render()
@@ -349,6 +367,10 @@ namespace graphics
 				}
 			}
 		}
+		
+		SDL_Color c = {255, 255, 255, 255};
+		renderer::text t("SOME TEST DATA", "Tauri-Regular.ttf", 14, c);
+		t.draw();
 	}
 
 	void render::view_change(float dx, float dy, float dz)
@@ -367,5 +389,51 @@ namespace graphics
 		for(auto it = cube_shader_map_.begin(); it != cube_shader_map_.end(); ++it) {
 			it->first->set_uniform(it->second.vm_uniform_it, view());
 		}
+	}
+
+	void render::blit_2d_texture(const_texture_ptr tex, const rect& r, const color& c)
+	{
+		static const GLfloat tc_array[] = {
+			0.0f, 0.0f,
+			0.0f, 1.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+		};
+		GLfloat vc_array[] = {
+			r.xf() , r.yf() , 
+			r.x2f(), r.yf() , 
+			r.xf() , r.y2f(), 
+			r.x2f(), r.y2f(), 
+		};
+		tex2d_shader->make_active();
+		tex2d_shader->set_uniform(tex2d_u_color_it, c.as_gl_color());
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tex->id());
+		glUniform1i(tex2d_u_texmap_it->second.location, 0);
+
+		glEnableVertexAttribArray(tex2d_a_position_it->second.location);
+		glVertexAttribPointer(
+			tex2d_a_position_it->second.location, // The attribute we want to configure
+			2,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			vc_array            // array buffer offset
+		);
+
+		glEnableVertexAttribArray(tex2d_a_texcoord_it->second.location);
+		glVertexAttribPointer(
+			tex2d_a_texcoord_it->second.location, // The attribute we want to configure
+			2,                            // size : U+V => 2
+			GL_FLOAT,                     // type
+			GL_FALSE,                     // normalized?
+			0,                            // stride
+			tc_array                      // array buffer offset
+		);
+
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glDisableVertexAttribArray(tex2d_a_position_it->second.location);
+		glDisableVertexAttribArray(tex2d_a_texcoord_it->second.location);
 	}
 }

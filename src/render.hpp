@@ -3,6 +3,8 @@
 #include <boost/shared_ptr.hpp>
 #include <glm/glm.hpp>
 
+#include "color.hpp"
+#include "geometry.hpp"
 #include "ref_counted_ptr.hpp"
 #include "shaders.hpp"
 #include "texture.hpp"
@@ -54,6 +56,9 @@ namespace graphics
 		void view_change(float dx, float dy, float dz);
 		const float* view() { return &view_[0][0]; }
 		const float* projection() { return &projection_[0][0]; }
+
+		static void blit_2d_texture(const_texture_ptr tex, const rect& r, const color& c);
+		//static void blit_2d_texture(texture_ptr tex);
 	protected:
 	private:
 		int width_;

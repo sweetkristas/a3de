@@ -22,98 +22,6 @@
 #define FRAME_RATE	1000 / 60
 
 
-uint8_t truncate_to_char(int value)
-{
-	if(value < 0) return 0;
-	if(value > 255) return 255;
-	return value;
-}
-
-namespace graphics
-{
-	class color
-	{
-	public:
-		color( int r, int g, int b, int a=255)
-		{
-			c_.rgba[0] = truncate_to_char(r);
-			c_.rgba[1] = truncate_to_char(g);
-			c_.rgba[2] = truncate_to_char(b);
-			c_.rgba[3] = truncate_to_char(a);
-			set_float_values();
-		}
-		explicit color(uint32_t rgba = 0)
-		{
-			c_.value = rgba;
-			set_float_values();
-		}
-		explicit color(const SDL_Color& col)
-		{
-			c_.rgba[0] = col.r;
-			c_.rgba[1] = col.g;
-			c_.rgba[2] = col.b;
-			c_.rgba[3] = 255;
-			set_float_values();
-		}
-		explicit color(float r, float g, float b, float a=1.0f)
-		{
-			rgbaf_[0] = clampf(r);
-			rgbaf_[1] = clampf(g);
-			rgbaf_[2] = clampf(b);
-			rgbaf_[3] = clampf(a);
-			c_.rgba[0] = int(rgbaf_[0]*255.0f);
-			c_.rgba[1] = int(rgbaf_[1]*255.0f);
-			c_.rgba[2] = int(rgbaf_[2]*255.0f);
-			c_.rgba[3] = int(rgbaf_[3]*255.0f);
-		}
-
-		uint8_t r() const { return c_.rgba[0]; }
-		uint8_t g() const { return c_.rgba[1]; }
-		uint8_t b() const { return c_.rgba[2]; }
-		uint8_t a() const { return c_.rgba[3]; }
-
-		SDL_Color as_sdl_color() const 
-		{
-			SDL_Color c = { c_.rgba[0], c_.rgba[1], c_.rgba[2], 255 };
-			return c;
-		}
-
-		const float* as_gl_color() const
-		{
-			return rgbaf_;
-		}
-		float* as_gl_color()
-		{
-			return rgbaf_;
-		}
-
-	private:
-		void set_float_values()
-		{
-			rgbaf_[0] = c_.rgba[0] / 255.0f;
-			rgbaf_[1] = c_.rgba[1] / 255.0f;
-			rgbaf_[2] = c_.rgba[2] / 255.0f;
-			rgbaf_[3] = c_.rgba[3] / 255.0f;
-		}
-
-		float clampf(float value)
-		{
-			if(value < 0.0f) return 0.0f;
-			if(value > 1.0f) return 1.0f;
-			return value;
-		}
-
-		union PixelUnion 
-		{
-			uint32_t value;
-			uint8_t rgba[4];
-		};
-		float rgbaf_[4];
-
-		PixelUnion c_;
-	};
-}
-
 void draw_rect(const rect& r, GLint vertex_attribute_index)
 {
 	GLfloat varray[] = {
@@ -191,7 +99,7 @@ int main(int argc, char* argv[])
 			"simple_vertex", "data/simple_color.vert", 
 			"simple_fragment", "data/simple_color.frag");
 
-		std::vector<std::vector<std::vector<graphics::cube_model_ptr> > > chunk;
+		/*std::vector<std::vector<std::vector<graphics::cube_model_ptr> > > chunk;
 		chunk.resize(4);
 		for(size_t n = 0; n != chunk.size(); ++n) {
 			chunk[n].resize(4);
@@ -210,25 +118,10 @@ int main(int argc, char* argv[])
 					render_obj.add_cube(shader, chunk[n][m][p]);
 				}
 			}
-		}
-		
-		//render_obj.add_cube(shader, new graphics::cube_model("images/uvtemplate.png"));
-		//graphics::cube_model_ptr xx = graphics::cube_model_ptr(new graphics::cube_model("images/uvtemplate.png"));
-		//xx->translate(2.0f, 0.0f, 0.0f);
-		//render_obj.add_cube(shader, xx);
-
-		/*std::vector<std::vector<std::vector<uint8_t> > > chunk;
-		chunk.resize(256);
-		for(size_t n = 0; n != chunk.size(); ++n) {
-			chunk[n].resize(256);
-			for(size_t m = 0; m != chunk[n].size(); ++m) {
-				chunk[n][m].resize(256);
-			}
 		}*/
+		
 
 		notify::manager notifications;
-		//notify::register_notification_path("data/", file_change);
-		//notify::register_notification_path("images/", file_change);
 
 		SDL_Event e = {0};
 		bool running = true;

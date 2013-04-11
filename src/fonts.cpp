@@ -32,7 +32,8 @@ namespace font
 			if(res.empty()) {
 				module::get_unique_files("data/fonts/", res);
 				notify::register_notification_path("data/fonts/", font_file_changed);
-				notify::register_notification_path(module::map_file("data/fonts/"), font_file_changed);
+				// XXX fixme if <module>/data/fonts doesn't exist.
+				//notify::register_notification_path(module::map_file("data/fonts/"), font_file_changed);
 			}
 			auto itor = res.find(name);
 			if(itor == res.end()) {

@@ -135,6 +135,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\asserts.hpp" />
+    <ClInclude Include="..\..\src\color.hpp" />
     <ClInclude Include="..\..\src\dir_monitor.hpp" />
     <ClInclude Include="..\..\src\fonts.hpp" />
     <ClInclude Include="..\..\src\notify.hpp" />
