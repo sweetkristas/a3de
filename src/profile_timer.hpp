@@ -37,6 +37,26 @@ namespace profile
 		}
 	};
 
+	struct timer
+	{
+		LARGE_INTEGER frequency;
+		LARGE_INTEGER t1;
+		double elapsedTime;
+
+		timer()
+		{
+			QueryPerformanceFrequency(&frequency);
+			QueryPerformanceCounter(&t1);
+		}
+
+		double elapsed_time_microseconds()
+		{
+			LARGE_INTEGER t2;
+			QueryPerformanceCounter(&t2);
+			return elapsedTime = (t2.QuadPart - t1.QuadPart) * 1000000.0 / frequency.QuadPart;
+		}
+	};
+
 #elif defined(linux)
 	struct manager
 	{

@@ -10,7 +10,9 @@
 #include "module.hpp"
 #include "notify.hpp"
 #include "obj_reader.hpp"
+#include "profile_timer.hpp"
 #include "render.hpp"
+#include "render_text.hpp"
 #include "shaders.hpp"
 #include "texture.hpp"
 #include "utils.hpp"
@@ -20,20 +22,6 @@
 
 // Approximate delay between frames.
 #define FRAME_RATE	1000 / 60
-
-
-void draw_rect(const rect& r, GLint vertex_attribute_index)
-{
-	GLfloat varray[] = {
-		r.xf(), r.yf(),
-		r.xf()+r.wf(), r.yf(),
-		r.xf(), r.yf()+r.hf(),
-		r.xf()+r.wf(), r.yf()+r.hf()
-	};
-	glEnableVertexAttribArray(vertex_attribute_index);
-	glVertexAttribPointer(vertex_attribute_index, 2, GL_FLOAT, 0, 0, varray);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
 
 void sdl_gl_setup()
 {
@@ -63,6 +51,72 @@ void file_change(const std::string& file, const boost::asio::dir_monitor_event& 
 	}
 }
 
+namespace 
+{
+	glm::vec3 position = glm::vec3(4.0f,3.0f, 20.0f); 
+	// Initial horizontal angle : toward -Z
+	float horizontal_angle = float(M_PI);
+	// Initial vertical angle : none
+	float vertical_angle = 0.0f;
+	// Initial Field of View
+	float initial_fov = 45.0f;
+	float speed = 0.1f; // 3 units / second
+	float mouse_speed = 0.005f;
+}
+
+bool process_events(graphics::render& render_obj)
+{
+	static Uint32 last_time = SDL_GetTicks();
+	float delta_t = float(SDL_GetTicks() - last_time);
+
+	int rmx, rmy;
+	SDL_GetRelativeMouseState(&rmx, &rmy);
+
+	horizontal_angle += mouse_speed * rmx;
+	vertical_angle   += mouse_speed * rmy;
+
+	glm::vec3 direction(
+		cos(vertical_angle) * sin(horizontal_angle), 
+		sin(vertical_angle),
+		cos(vertical_angle) * cos(horizontal_angle)
+	);
+	glm::vec3 right = glm::vec3(
+		sin(horizontal_angle - float(M_PI)/2.0f), 
+		0,
+		cos(horizontal_angle - float(M_PI)/2.0f)
+	);
+	
+	// Up vector
+	glm::vec3 up = glm::cross(right, direction);
+
+	SDL_Event e;
+	while(SDL_PollEvent(&e)) {
+		switch(e.type) {
+		case SDL_MOUSEWHEEL:
+			initial_fov += e.wheel.y * 5;
+			break;
+		case SDL_QUIT:
+			return false;
+		case SDL_KEYDOWN:
+			if(e.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+				return false;
+			} else if(e.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
+				position += right * delta_t * speed;
+			} else if(e.key.keysym.scancode == SDL_SCANCODE_LEFT) {
+				position -= right * delta_t * speed;
+			} else if(e.key.keysym.scancode == SDL_SCANCODE_DOWN) {
+				position -= direction * delta_t * speed;
+			} else if(e.key.keysym.scancode == SDL_SCANCODE_UP) {
+				position += direction * delta_t * speed;
+			}
+			break;
+		}
+	}
+
+	render_obj.set_view(initial_fov, position, direction, up);
+	last_time =  SDL_GetTicks();
+	return true;
+}
 
 int main(int argc, char* argv[]) 
 {
@@ -92,6 +146,8 @@ int main(int argc, char* argv[])
 		wm.set_icon("images/icon.png");
 		wm.gl_init();
 
+		SDL_SetRelativeMouseMode(SDL_TRUE);
+
 		font::manager font_manager;
 
 		graphics::render render_obj(wm, window_size.x, window_size.y);
@@ -99,7 +155,7 @@ int main(int argc, char* argv[])
 			"simple_vertex", "data/simple_color.vert", 
 			"simple_fragment", "data/simple_color.frag");
 
-		/*std::vector<std::vector<std::vector<graphics::cube_model_ptr> > > chunk;
+		std::vector<std::vector<std::vector<graphics::cube_model_ptr> > > chunk;
 		chunk.resize(4);
 		for(size_t n = 0; n != chunk.size(); ++n) {
 			chunk[n].resize(4);
@@ -118,46 +174,36 @@ int main(int argc, char* argv[])
 					render_obj.add_cube(shader, chunk[n][m][p]);
 				}
 			}
-		}*/
+		}
 		
-
 		notify::manager notifications;
 
-		SDL_Event e = {0};
 		bool running = true;
 		Uint32 start_time = SDL_GetTicks();
 		uint64_t render_acc = 0;
 		int render_cnt = 0;
-		while(running) {
-			Uint32 cycle_start_tick = SDL_GetTicks();
-			SDL_PollEvent(&e);
-			switch(e.type) {
-			case SDL_MOUSEWHEEL:
-				render_obj.view_change(0.0f, 0.0f, float(e.wheel.y));
-				break;
-			case SDL_QUIT:
-				running = false;
-				break;
-			case SDL_KEYDOWN:
-				if(e.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-					running = false;
-				} else if(e.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
-					render_obj.view_change(-0.5f, 0.0f, 0.0f);
-				} else if(e.key.keysym.scancode == SDL_SCANCODE_LEFT) {
-					render_obj.view_change(0.5f, 0.0f, 0.0f);
-				} else if(e.key.keysym.scancode == SDL_SCANCODE_DOWN) {
-					render_obj.view_change(0.0f, -0.5f, 0.0f);
-				} else if(e.key.keysym.scancode == SDL_SCANCODE_UP) {
-					render_obj.view_change(0.0f, 0.5f, 0.0f);
-				}
-				break;
-			}
 
+		while(running) {
+			profile::timer ptimer;
+
+			Uint32 cycle_start_tick = SDL_GetTicks();
+
+			notifications.poll();
+
+			running = process_events(render_obj);
+
+			double frame_processing_time = ptimer.elapsed_time_microseconds();
 			render_obj.draw();
+			double frame_render_time = ptimer.elapsed_time_microseconds() - frame_processing_time;
+
+			std::stringstream ss1, ss2;
+			ss1 << "Frame draw time (uS): " << std::fixed << frame_render_time;
+			graphics::renderer::text::temp_draw(render_obj, -1.0f, -1.0f, ss1.str(), "Tauri-Regular.ttf", 14, graphics::color(1.0f, 1.0f, 0.5f));
+			ss2 << "Frame process time (uS): " << std::fixed << (frame_processing_time+frame_render_time);
+			graphics::renderer::text::temp_draw(render_obj, 0.0f, -1.0f, ss2.str(), "Tauri-Regular.ttf", 14, graphics::color(1.0f, 1.0f, 0.5f));
 			wm.swap();
 
 			Uint32 delay = SDL_GetTicks() - cycle_start_tick;
-
 			render_acc += delay;
 			render_cnt++;
 			Uint32 current_time = SDL_GetTicks();
@@ -174,8 +220,6 @@ int main(int argc, char* argv[])
 			} else {
 				SDL_Delay(FRAME_RATE - delay);
 			}
-
-			notifications.poll();
 		}
 
 		return 0;

@@ -57,7 +57,7 @@ namespace graphics
 		glShadeModel(GL_SMOOTH);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glClearColor(0.1f, 0.1f, 0.0f, 0.1f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 		glViewport(0, 0, GLsizei(width_), GLsizei(height_));
 

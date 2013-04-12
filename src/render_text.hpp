@@ -12,9 +12,16 @@ namespace graphics
 		class text
 		{
 		public:
-			explicit text(const std::string& str, const std::string& font, int size, SDL_Color& color);
+			explicit text(const std::string& str, const std::string& font, int size, const SDL_Color& color);
 			virtual ~text();
-			void draw() const;
+			static void temp_draw(render& render_obj,
+				GLfloat x, 
+				GLfloat y, 
+				const std::string& str, 
+				const std::string& font, 
+				int size, 
+				const color& c);
+			void draw(render& render_obj) const;
 		protected:
 		private:
 			text();

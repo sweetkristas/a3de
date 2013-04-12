@@ -19,7 +19,6 @@ namespace sys
 
 	std::string read_file(const std::string& name)
 	{
-		std::cerr << "current path: " << initial_path() << std::endl;
 		ASSERT_LOG(file_exists(name), "Couldn't read file: " << name);
 		std::ifstream file(name, std::ios_base::binary);
 		std::stringstream ss;

@@ -1,3 +1,5 @@
+#include <sstream>
+#include <iomanip>
 #include <vector>
 #include <glm/gtc/matrix_transform.hpp>
 #include <boost/shared_array.hpp>
@@ -279,17 +281,30 @@ namespace graphics
 	namespace
 	{
 		shader::program_object_ptr tex2d_shader;
-		shader::const_actives_map_iterator tex2d_u_color_it;
 		shader::const_actives_map_iterator tex2d_u_texmap_it;
 		shader::const_actives_map_iterator tex2d_a_position_it;
 		shader::const_actives_map_iterator tex2d_a_texcoord_it;
+
+		shader::program_object_ptr poly_shader;
+		shader::const_actives_map_iterator poly_u_color_it;
+		shader::const_actives_map_iterator poly_a_position_it;
+		
+		
+		boost::shared_array<GLuint> generic_vbo;
+		const int num_generic_vbo = 2;
+		struct vbo_deleter
+		{
+			void operator()(GLuint* vbo)
+			{
+				glDeleteBuffers(num_generic_vbo, vbo);
+			}
+		};
 	}
 
 	render::render(graphics::window_manager& wm, int w, int h) 
 			: wm_(wm), width_(w), height_(h)
 	{
-		eye_ = glm::vec3(10.0f,-10.0f,10.0f);
-		view_ = glm::lookAt(eye_, 
+		view_ = glm::lookAt(glm::vec3(4.0f,3.0f,-20.0f), 
 			glm::vec3(0.0f, 0.0f, 0.0f), 
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		projection_ = glm::perspective(45.0f, float(w)/float(h), 0.1f, 100.0f);
@@ -297,10 +312,19 @@ namespace graphics
 		tex2d_shader.reset(new shader::program_object("texture_shader_2d",
 			shader::shader(GL_VERTEX_SHADER, "texture_2d_vert", sys::read_file("data/texture_2d.vert")),
 			shader::shader(GL_FRAGMENT_SHADER, "texture_2d_frag", sys::read_file("data/texture_2d.frag"))));
-		tex2d_u_color_it = tex2d_shader->get_uniform_iterator("u_color");
 		tex2d_u_texmap_it = tex2d_shader->get_uniform_iterator("u_tex_map");
 		tex2d_a_position_it = tex2d_shader->get_attribute_iterator("a_position");
 		tex2d_a_texcoord_it = tex2d_shader->get_attribute_iterator("a_texcoord");
+		//tex2d_shader->make_active();
+
+		poly_shader.reset(new shader::program_object("poly_shader_2d",
+			shader::shader(GL_VERTEX_SHADER, "poly_2d_vert", sys::read_file("data/simple_poly.vert")),
+			shader::shader(GL_FRAGMENT_SHADER, "poly_2d_frag", sys::read_file("data/simple_poly.frag"))));
+		poly_u_color_it = poly_shader->get_uniform_iterator("u_color");
+		poly_a_position_it = poly_shader->get_attribute_iterator("a_position");
+		
+		generic_vbo.reset(new GLuint[num_generic_vbo], vbo_deleter());
+		glGenBuffers(num_generic_vbo, generic_vbo.get());
 	}
 
 	render::~render()
@@ -354,85 +378,100 @@ namespace graphics
 
 	void render::draw()
 	{
-		profile::manager manager("render::draw()");
-
+		//profile::manager manager("render::draw()");
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 		for(auto it = cube_shader_map_.begin(); it != cube_shader_map_.end(); ++it) {
 			if(it->second.cube_draw_list_.size() != 0) {
 				it->first->make_active();
+				it->first->set_uniform(it->second.vm_uniform_it, view());
+				it->first->set_uniform(it->second.pm_uniform_it, projection());
 				for(auto obj = it->second.cube_draw_list_.begin(); obj != it->second.cube_draw_list_.end(); ++obj) {
 					it->second.cube_->draw(*obj);
 				}
 			}
 		}
 		
-		SDL_Color c = {255, 255, 255, 255};
-		renderer::text t("SOME TEST DATA", "Tauri-Regular.ttf", 14, c);
-		t.draw();
+		//draw_rect(rect(-0.5f, -0.5f, 1.0f, 1.0f), color(0, 255, 0));
 	}
 
-	void render::view_change(float dx, float dy, float dz)
+	void render::set_view(float fov, const glm::vec3& position, const glm::vec3& direction, const glm::vec3& up)
 	{
-		eye_ += glm::vec3(dx, dy, dz);
-		if(eye_.z > 10) {
-			eye_.z = 10;
-		}
-		if(eye_.z < -10) {
-			eye_.z = -10;
-		}
-		view_ = glm::lookAt(eye_, 
-			glm::vec3(0.0f, 0.0f, 0.0f), 
-			glm::vec3(0.0f, 1.0f, 0.0f));
-
-		for(auto it = cube_shader_map_.begin(); it != cube_shader_map_.end(); ++it) {
-			it->first->set_uniform(it->second.vm_uniform_it, view());
-		}
+		view_ = glm::lookAt(position, position+direction, up);
+		projection_ = glm::perspective(fov, float(width_)/float(height_), 0.1f, 100.0f);
 	}
 
-	void render::blit_2d_texture(const_texture_ptr tex, const rect& r, const color& c)
+	void render::draw_rect(const rect& r, const color& c)
 	{
+		GLfloat vc_array[] = {
+			r.xf(), r.yf(),
+			r.xf(), r.yf()+r.hf(),
+			r.xf()+r.wf(), r.yf(),
+			r.xf()+r.wf(), r.yf()+r.hf(),
+		};
+		poly_shader->make_active();
+		poly_shader->set_uniform(poly_u_color_it, c.as_gl_color());
+
+		glEnableVertexAttribArray(poly_a_position_it->second.location);
+		glBindBuffer(GL_ARRAY_BUFFER, generic_vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vc_array), vc_array, GL_DYNAMIC_DRAW);
+		glVertexAttribPointer(poly_a_position_it->second.location, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glDisable(GL_CULL_FACE);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glEnable(GL_CULL_FACE);
+		glDisableVertexAttribArray(poly_a_position_it->second.location);
+	}
+
+	void render::blit_2d_texture(const_texture_ptr tex, GLfloat x, GLfloat y)
+	{
+		GLfloat w = 2.0f*tex->width()/width_;
+		GLfloat h = 2.0f*tex->height()/height_;
 		static const GLfloat tc_array[] = {
-			0.0f, 0.0f,
 			0.0f, 1.0f,
-			1.0f, 0.0f,
+			0.0f, 0.0f,
 			1.0f, 1.0f,
+			1.0f, 0.0f,
 		};
 		GLfloat vc_array[] = {
-			r.xf() , r.yf() , 
-			r.x2f(), r.yf() , 
-			r.xf() , r.y2f(), 
-			r.x2f(), r.y2f(), 
+			x, y,
+			x, y+h,
+			x+w, y,
+			x+w, y+h,
 		};
 		tex2d_shader->make_active();
-		tex2d_shader->set_uniform(tex2d_u_color_it, c.as_gl_color());
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex->id());
 		glUniform1i(tex2d_u_texmap_it->second.location, 0);
 
 		glEnableVertexAttribArray(tex2d_a_position_it->second.location);
+		glBindBuffer(GL_ARRAY_BUFFER, generic_vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vc_array), vc_array, GL_DYNAMIC_DRAW);
 		glVertexAttribPointer(
 			tex2d_a_position_it->second.location, // The attribute we want to configure
 			2,                  // size
 			GL_FLOAT,           // type
 			GL_FALSE,           // normalized?
 			0,                  // stride
-			vc_array            // array buffer offset
+			0					// array buffer offset
 		);
 
 		glEnableVertexAttribArray(tex2d_a_texcoord_it->second.location);
+		glBindBuffer(GL_ARRAY_BUFFER, generic_vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(tc_array), tc_array, GL_DYNAMIC_DRAW);
 		glVertexAttribPointer(
 			tex2d_a_texcoord_it->second.location, // The attribute we want to configure
 			2,                            // size : U+V => 2
 			GL_FLOAT,                     // type
 			GL_FALSE,                     // normalized?
 			0,                            // stride
-			tc_array                      // array buffer offset
+			0							  // array buffer offset
 		);
 
+		glDisable(GL_CULL_FACE);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glEnable(GL_CULL_FACE);
 		glDisableVertexAttribArray(tex2d_a_position_it->second.location);
 		glDisableVertexAttribArray(tex2d_a_texcoord_it->second.location);
 	}

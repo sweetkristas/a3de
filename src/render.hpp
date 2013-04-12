@@ -53,12 +53,14 @@ namespace graphics
 
 		void add_cube(shader::program_object_ptr shader, cube_model_ptr obj);
 		void draw();
-		void view_change(float dx, float dy, float dz);
+		void set_view(float fov, const glm::vec3& position, const glm::vec3& direction, const glm::vec3& up);
 		const float* view() { return &view_[0][0]; }
 		const float* projection() { return &projection_[0][0]; }
+		int width() const { return width_; }
+		int height() const { return height_; }
 
-		static void blit_2d_texture(const_texture_ptr tex, const rect& r, const color& c);
-		//static void blit_2d_texture(texture_ptr tex);
+		void blit_2d_texture(const_texture_ptr tex, GLfloat x, GLfloat y);
+		static void draw_rect(const rect& r, const color& c);
 	protected:
 	private:
 		int width_;
@@ -66,8 +68,6 @@ namespace graphics
 
 		glm::mat4 view_;
 		glm::mat4 projection_;
-
-		glm::vec3 eye_;
 
 		graphics::window_manager& wm_;
 
