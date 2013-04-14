@@ -94,44 +94,7 @@ namespace graphics
 			0.666666f, 0.666666f,
 		};
 
-		/*static const GLfloat cube_vertex_buffer_data[] = {
-			// Front face
-			-1,-1,1, 1,-1,1, -1,1,1, 1,1,1,
-			// Right face
-			1,1,1, 1,-1,1, 1,1,-1, 1,-1,-1,
-			// Back face
-			1,-1,-1, -1,-1,-1, 1,1,-1, -1,1,-1,
-			// Left face
-			-1,1,-1, -1,-1,-1, -1,1,1, -1,-1,1,
-			// Bottom face
-			-1,-1,1, -1,-1,-1, 1,-1,1, 1,-1,-1,
-       
-			// move to top
-			1,-1,-1, -1,1,1,
-
-			// Top Face
-			-1,1,1, 1,1,1, -1,1,-1, 1,1,-1
-		};
-
-		static const GLfloat cube_uv_buffer_data[] = {
-			// Front face
-			0,0, 1,0, 0,1, 1,1,
-			// Right face
-			0,1, 0,0, 1,1, 1,0,
-			// Back face
-			0,0, 1,0, 0,1, 1,1,
-			// Left face
-			0,1, 0,0, 1,1, 1,0,
-			// Bottom face
-			0,1, 0,0, 1,1, 1,0,
-       
-			1,0, 0,0,
-       
-			// Top face
-			0,0, 1,0, 0,1, 1,1
-		};*/
-
-		static const int num_array_buffers = 2;
+		static const int num_array_buffers = 12;
 
 		struct cube_array_buffer_deleter
 		{
@@ -151,7 +114,7 @@ namespace graphics
 				glBindBuffer(GL_ARRAY_BUFFER, res[0]);
 				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertex_buffer_data), cube_vertex_buffer_data, GL_STATIC_DRAW);
 				glBindBuffer(GL_ARRAY_BUFFER, res[1]);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_uv_buffer_data), cube_uv_buffer_data, GL_STATIC_DRAW);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_uv_buffer_data), cube_uv_buffer_data, GL_DYNAMIC_DRAW);
 			}
 			return res;
 		}
