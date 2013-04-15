@@ -259,6 +259,7 @@
     <ClCompile Include="..\..\..\lua\src\lundump.c" />
     <ClCompile Include="..\..\..\lua\src\lvm.c" />
     <ClCompile Include="..\..\..\lua\src\lzio.c" />
+    <ClCompile Include="..\..\src\btinterface.cpp" />
     <ClCompile Include="..\..\src\fonts.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\filesystem.cpp" />
@@ -505,6 +506,7 @@
     <ClInclude Include="..\..\..\bullet\src\MiniCL\MiniCLTask\MiniCLTask.h" />
     <ClInclude Include="..\..\..\bullet\src\vectormath\vmInclude.h" />
     <ClInclude Include="..\..\src\asserts.hpp" />
+    <ClInclude Include="..\..\src\btinterface.hpp" />
     <ClInclude Include="..\..\src\color.hpp" />
     <ClInclude Include="..\..\src\dir_monitor.hpp" />
     <ClInclude Include="..\..\src\fonts.hpp" />

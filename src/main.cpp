@@ -2,9 +2,7 @@
 #include <sstream>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
-#include <btBulletDynamicsCommon.h>
-
+#include "btinterface.hpp"
 #include "filesystem.hpp"
 #include "fonts.hpp"
 #include "geometry.hpp"
@@ -121,66 +119,18 @@ bool process_events(graphics::render& render_obj)
 
 int phys_sim()
 {
-	boost::shared_ptr<btBroadphaseInterface> broadphase = boost::shared_ptr<btBroadphaseInterface>(new btDbvtBroadphase());
- 
-	boost::shared_ptr<btDefaultCollisionConfiguration> collisionConfiguration = boost::shared_ptr<btDefaultCollisionConfiguration>(new btDefaultCollisionConfiguration());
-	boost::shared_ptr<btCollisionDispatcher> dispatcher = boost::shared_ptr<btCollisionDispatcher>(new btCollisionDispatcher(collisionConfiguration.get()));
- 
-	boost::shared_ptr<btSequentialImpulseConstraintSolver> solver = boost::shared_ptr<btSequentialImpulseConstraintSolver>(new btSequentialImpulseConstraintSolver);
- 
-	boost::shared_ptr<btDiscreteDynamicsWorld> dynamicsWorld = boost::shared_ptr<btDiscreteDynamicsWorld>(new btDiscreteDynamicsWorld(dispatcher.get(),broadphase.get(),solver.get(),collisionConfiguration.get()));
- 
-	dynamicsWorld->setGravity(btVector3(0,-10,0));
- 
- 
-	boost::shared_ptr<btCollisionShape> groundShape = boost::shared_ptr<btCollisionShape>(new btStaticPlaneShape(btVector3(0,1,0),1));
- 
-	boost::shared_ptr<btCollisionShape> fallShape = boost::shared_ptr<btCollisionShape>(new btSphereShape(1));
- 
- 
-	boost::shared_ptr<btDefaultMotionState> groundMotionState = boost::shared_ptr<btDefaultMotionState>(new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1),btVector3(0,-1,0))));
-	btRigidBody::btRigidBodyConstructionInfo
-			groundRigidBodyCI(0,groundMotionState.get(),groundShape.get(),btVector3(0,0,0));
-	boost::shared_ptr<btRigidBody> groundRigidBody = boost::shared_ptr<btRigidBody>(new btRigidBody(groundRigidBodyCI));
-	dynamicsWorld->addRigidBody(groundRigidBody.get());
- 
- 
-	boost::shared_ptr<btDefaultMotionState> fallMotionState =
-			boost::shared_ptr<btDefaultMotionState>(new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1),btVector3(0,50,0))));
-	btScalar mass = 1;
-	btVector3 fallInertia(0,0,0);
-	fallShape->calculateLocalInertia(mass,fallInertia);
-	btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass,fallMotionState.get(),fallShape.get(),fallInertia);
-	boost::shared_ptr<btRigidBody> fallRigidBody = boost::shared_ptr<btRigidBody>(new btRigidBody(fallRigidBodyCI));
-	dynamicsWorld->addRigidBody(fallRigidBody.get());
- 
+	bullet::manager bman;
  
 	for (int i=0 ; i<300 ; i++) {
-			dynamicsWorld->stepSimulation(1/60.f,10);
+		//profile::manager pman("simstep");
+		bman.step();
  
-			btTransform trans;
-			fallRigidBody->getMotionState()->getWorldTransform(trans);
+		btTransform trans;
+		fallRigidBody->getMotionState()->getWorldTransform(trans);
  
-			std::cout << "sphere height: " << trans.getOrigin().getY() << std::endl;
+		std::cout << "sphere height: " << trans.getOrigin().getY() << std::endl;
 	}
- 
-	dynamicsWorld->removeRigidBody(fallRigidBody.get());
-	//delete fallRigidBody->getMotionState();
-	//delete fallRigidBody;
- 
-	dynamicsWorld->removeRigidBody(groundRigidBody.get());
-	//delete groundRigidBody->getMotionState();
-	//delete groundRigidBody;
- 
- 
-	//delete fallShape;
- 
-	//delete groundShape;
- 
- 
-	//delete dynamicsWorld;
-	//delete solver;
- 
+
 	return 0;
 }
 
