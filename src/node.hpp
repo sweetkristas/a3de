@@ -63,10 +63,16 @@ namespace node
 		bool operator==(const node&) const;
 		bool operator!=(const node&) const;
 
+		bool operator==(const std::string&) const;
+		bool operator==(int64_t) const;
+
 		const node& operator[](size_t n) const;
-		const node& operator[](const node v) const;
+		const node& operator[](const node& v) const;
 		const node& operator[](const std::string& key) const;
 
+		bool has_key(const node& v) const;
+		bool has_key(const std::string& key) const;
+			
 		void write_json(std::ostream& s, bool pretty=true, int indent=0) const;
 	protected:
 	private:

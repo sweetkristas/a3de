@@ -97,7 +97,7 @@ namespace json
 			case DOCUMENT_END:
 				return "DOCUMENT END";
 			default:
-				throw new parse_error(formatter() << "unknown token type in token_as_string: " << tok);
+				throw parse_error(formatter() << "unknown token type in token_as_string: " << tok);
 			}
 			return "";
 		}
@@ -111,7 +111,7 @@ namespace json
 			} else if(c >= 'A' && c <= 'F') {
 				return c - 'A' + 10;
 			}
-			throw new parse_error(formatter() << "Invalid character in decode: " << c);
+			throw parse_error(formatter() << "Invalid character in decode: " << c);
 		}
 
 		void push_back(json_token tok, node::node value)
@@ -134,7 +134,7 @@ namespace json
 			while(running) {
 				if(it_ == lex_str_.end()) {
 					if(in_string) {
-						throw new parse_error(formatter() << "End of data inside string");
+						throw parse_error(formatter() << "End of data inside string");
 					}
 					return boost::make_tuple(DOCUMENT_END, node::node());
 				}
@@ -153,7 +153,7 @@ namespace json
 					} else if(*it_ == '\\') {
 						++it_;
 						if(it_ == lex_str_.end()) {
-							throw new parse_error(formatter() << "End of data in quoted token");
+							throw parse_error(formatter() << "End of data in quoted token");
 						}
 						if(*it_ == '"') {
 							new_string += '"';
@@ -198,10 +198,10 @@ namespace json
 									new_string += char(0x80 | (value & 0x3f));
 								}
 							} else {
-								throw new parse_error(formatter() << "Expected 4 hexadecimal characters after \\u token");
+								throw parse_error(formatter() << "Expected 4 hexadecimal characters after \\u token");
 							}
 						} else {
-							throw new parse_error(formatter() << "Unrecognised quoted token: " << *it_);
+							throw parse_error(formatter() << "Unrecognised quoted token: " << *it_);
 						}
 					} else {
 						new_string += *it_++;
@@ -329,7 +329,7 @@ namespace json
 				} else if(tok == lexer::LEFT_BRACKET) {
 					res.push_back(read_array(lex));
 				} else {
-					throw new parse_error(formatter() << "Expected colon ':' found " << lexer::token_as_string(tok));
+					throw parse_error(formatter() << "Expected colon ':' found " << lexer::token_as_string(tok));
 				}
 				boost::tie(tok, token_value) = lex.get_next_token();
 				if(tok == lexer::RIGHT_BRACKET) {
@@ -358,11 +358,11 @@ namespace json
 				if(tok == lexer::LITERAL || tok == lexer::STRING_LITERAL) {
 					key = token_value;
 				} else {
-					throw new parse_error(formatter() << "Unexpected token type: " << lexer::token_as_string(tok) << " expected string or literal");
+					throw parse_error(formatter() << "Unexpected token type: " << lexer::token_as_string(tok) << " expected string or literal");
 				}
 				boost::tie(tok, token_value) = lex.get_next_token();
 				if(tok != lexer::COLON) {
-					throw new parse_error(formatter() << "Expected colon ':' found " << lexer::token_as_string(tok));
+					throw parse_error(formatter() << "Expected colon ':' found " << lexer::token_as_string(tok));
 				}
 				boost::tie(tok, token_value) = lex.get_next_token();
 				if(lexer::is_simple_value(tok)) {
@@ -372,7 +372,7 @@ namespace json
 				} else if(tok == lexer::LEFT_BRACKET) {
 					res[key] = read_array(lex);
 				} else {
-					throw new parse_error(formatter() << "Expected colon ':' found " << lexer::token_as_string(tok));
+					throw parse_error(formatter() << "Expected colon ':' found " << lexer::token_as_string(tok));
 				}
 				boost::tie(tok, token_value) = lex.get_next_token();
 				if(tok == lexer::RIGHT_BRACE) {
@@ -401,13 +401,17 @@ namespace json
 		} else if(tok == lexer::LEFT_BRACKET) {
 			return read_array(lex);
 		} else {
-			throw new parse_error(formatter() << "Expecting array or object, found " << lexer::token_as_string(tok));
+			throw parse_error(formatter() << "Expecting array or object, found " << lexer::token_as_string(tok));
 		}
 	}
 
 	node::node parse_from_file(const std::string& fname)
 	{
-		return parse(sys::read_file(fname));
+		if(sys::file_exists(fname)) {
+			return parse(sys::read_file(fname));
+		} else {
+			throw parse_error(formatter() << "File \"" <<  fname << "\" doesn't exist");
+		}
 	}
 }
 

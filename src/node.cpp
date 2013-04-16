@@ -221,10 +221,10 @@ namespace node
 		return l_[n];
 	}
 
-	const node& node::operator[](const node v) const
+	const node& node::operator[](const node& v) const
 	{
 		if(type() == NODE_TYPE_LIST) {
-			return l_[v.as_int()];
+			return l_[size_t(v.as_int())];
 		} else if(type() == NODE_TYPE_MAP) {
 			auto it = m_.find(v);
 			ASSERT_LOG(it != m_.end(), "Couldn't find key in map");
@@ -240,6 +240,34 @@ namespace node
 		auto it = m_.find(node(key));
 		ASSERT_LOG(it != m_.end(), "Couldn't find key(" << key << ") in map");
 		return it->second;
+	}
+
+	bool node::has_key(const node& v) const
+	{
+		if(type() == NODE_TYPE_LIST) {
+			return v.as_int() < l_.size() ? true : false;
+		} else if(type() == NODE_TYPE_MAP) {
+			return m_.find(v) != m_.end() ? true : false;
+		} else {
+			ASSERT_LOG(false, "Tried to index a node that isn't a list or map: " << type_as_string());
+		}
+		return false;
+	}
+
+	bool node::has_key(const std::string& key) const
+	{
+		ASSERT_LOG(type() == NODE_TYPE_MAP, "Tried to index node that isn't a map, was: " << type_as_string());
+		return m_.find(node(key)) != m_.end() ? true : false;
+	}
+
+	bool node::operator==(const std::string& s) const
+	{
+		return *this == node(s);
+	}
+
+	bool node::operator==(int64_t n) const
+	{
+		return *this == node(n);
 	}
 
 	bool node::operator==(const node& n) const

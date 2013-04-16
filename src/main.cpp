@@ -6,6 +6,7 @@
 #include "filesystem.hpp"
 #include "fonts.hpp"
 #include "geometry.hpp"
+#include "json.hpp"
 #include "module.hpp"
 #include "notify.hpp"
 #include "obj_reader.hpp"
@@ -117,16 +118,16 @@ bool process_events(graphics::render& render_obj)
 	return true;
 }
 
-int phys_sim()
+int phys_sim(const node::node& world)
 {
-	bullet::manager bman;
+	bullet::manager bman(world);
  
 	for (int i=0 ; i<300 ; i++) {
 		//profile::manager pman("simstep");
 		bman.step();
  
 		btTransform trans;
-		fallRigidBody->getMotionState()->getWorldTransform(trans);
+		bman.get_rigid_body(1)->getMotionState()->getWorldTransform(trans);
  
 		std::cout << "sphere height: " << trans.getOrigin().getY() << std::endl;
 	}
@@ -145,7 +146,12 @@ int main(int argc, char* argv[])
 
 	point window_size = point(1024, 768);
 
-	phys_sim();
+	try {
+		node::node world = json::parse_from_file(module::map_file("data/world.cfg"));
+		phys_sim(world);
+	} catch(json::parse_error& e) {
+		std::cerr << "Parse Error: " << e.what() << std::endl;
+	}
 
 	try {
 		if(test::run_tests() == false) {

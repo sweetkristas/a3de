@@ -11,9 +11,10 @@ namespace bullet
 	class manager
 	{
 	public:
-		manager(const node::node& world, bool enable=true);
+		manager(const node::node& world);
 		virtual ~manager();
 		int step();
+		boost::shared_ptr<btRigidBody> get_rigid_body(size_t n);
 	private:
 		bool in_use_;
 
@@ -28,8 +29,5 @@ namespace bullet
 		std::vector<boost::shared_ptr<btRigidBody> > rigid_bodies_;
 
 		std::vector<boost::shared_ptr<btDefaultMotionState> > motion_states_;
-
-		boost::shared_ptr<btRigidBody> fallRigidBody
-
 	};
 }

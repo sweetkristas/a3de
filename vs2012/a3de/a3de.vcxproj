@@ -50,7 +50,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../../glm-0.9.4.3;../../../boost;../../../SDL/include;../../../SDL_image;../../../SDL_ttf;../../../lua/src;../../../glee/DATA/output;c:/Projects/a3de/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../glm-0.9.4.3;../../../boost;../../../SDL/include;../../../SDL_image;../../../SDL_ttf;../../../lua/src;../../../glee/DATA/output;../../../bullet/src;c:/Projects/a3de/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
