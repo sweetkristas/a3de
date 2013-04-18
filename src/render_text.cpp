@@ -33,7 +33,7 @@ namespace graphics
 		}
 
 
-		void text::temp_draw(render& render_obj, 
+		void text::quick_draw(render& render_obj, 
 			GLfloat x, 
 			GLfloat y, 
 			const std::string& str, 

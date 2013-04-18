@@ -222,9 +222,9 @@ int main(int argc, char* argv[])
 
 			std::stringstream ss1, ss2;
 			ss1 << "Frame draw time (uS): " << std::fixed << frame_render_time;
-			graphics::renderer::text::temp_draw(render_obj, -1.0f, -1.0f, ss1.str(), "Tauri-Regular.ttf", 14, graphics::color(1.0f, 1.0f, 0.5f));
+			graphics::renderer::text::quick_draw(render_obj, -1.0f, -1.0f, ss1.str(), "Tauri-Regular.ttf", 14, graphics::color(1.0f, 1.0f, 0.5f));
 			ss2 << "Frame process time (uS): " << std::fixed << (frame_processing_time+frame_render_time);
-			graphics::renderer::text::temp_draw(render_obj, 0.0f, -1.0f, ss2.str(), "Tauri-Regular.ttf", 14, graphics::color(1.0f, 1.0f, 0.5f));
+			graphics::renderer::text::quick_draw(render_obj, 0.0f, -1.0f, ss2.str(), "Tauri-Regular.ttf", 14, graphics::color(1.0f, 1.0f, 0.5f));
 			wm.swap();
 
 			Uint32 delay = SDL_GetTicks() - cycle_start_tick;

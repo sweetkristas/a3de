@@ -14,7 +14,7 @@ namespace graphics
 		public:
 			explicit text(const std::string& str, const std::string& font, int size, const SDL_Color& color);
 			virtual ~text();
-			static void temp_draw(render& render_obj,
+			static void quick_draw(render& render_obj,
 				GLfloat x, 
 				GLfloat y, 
 				const std::string& str, 
