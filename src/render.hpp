@@ -17,6 +17,14 @@ namespace graphics
 	class cube_model : public reference_counted_ptr
 	{
 	public:
+		enum {
+			FRONT,
+			RIGHT,
+			TOP,
+			BACK,
+			LEFT,
+			BOTTOM,
+		};
 		cube_model();
 		explicit cube_model(const std::string& texname);
 		virtual ~cube_model();
@@ -26,6 +34,7 @@ namespace graphics
 		GLuint tex_id() const;
 		void set_neighbourhood(int px, int nx, int py, int ny, int pz, int nz);
 		bool is_fully_occluded();
+		bool should_draw_face(int f);
 	private:
 		mutable glm::mat4 model_;
 		const_texture_ptr tex_;

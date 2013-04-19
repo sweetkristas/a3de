@@ -45,7 +45,7 @@ namespace sys
 		path p(name);
 		if(exists(p)) {
 			ASSERT_LOG(is_directory(p) || is_other(p), "get_unique_files() not directory: " << name);
-			for(auto it = directory_iterator(p); it != directory_iterator(); ++ it) {
+			for(auto it = directory_iterator(p); it != directory_iterator(); ++it) {
 				if(is_regular_file(it->path())) {
 					fpm[it->path().filename().generic_string()] = it->path().generic_string();
 				} else {

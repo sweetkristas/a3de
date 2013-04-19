@@ -16,85 +16,93 @@ namespace graphics
 {
 	namespace
 	{
-		static const GLfloat cube_vertex_buffer_data[] = {
-			-1.0f,-1.0f,-1.0f, // triangle 1 : begin
-			-1.0f,-1.0f, 1.0f,
-			-1.0f, 1.0f, 1.0f, // triangle 1 : end
-			1.0f, 1.0f,-1.0f, // triangle 2 : begin
-			-1.0f,-1.0f,-1.0f,
-			-1.0f, 1.0f,-1.0f, // triangle 2 : end
-			1.0f,-1.0f, 1.0f, 
-			-1.0f,-1.0f,-1.0f,
-			1.0f,-1.0f,-1.0f, 
-			1.0f, 1.0f,-1.0f, 
-			1.0f,-1.0f,-1.0f, 
-			-1.0f,-1.0f,-1.0f,
-			-1.0f,-1.0f,-1.0f,
-			-1.0f, 1.0f, 1.0f,
-			-1.0f, 1.0f,-1.0f,
-			1.0f,-1.0f, 1.0f, 
-			-1.0f,-1.0f, 1.0f,
-			-1.0f,-1.0f,-1.0f,
-			-1.0f, 1.0f, 1.0f,
-			-1.0f,-1.0f, 1.0f,
-			1.0f,-1.0f, 1.0f, 
-			1.0f, 1.0f, 1.0f, 
-			1.0f,-1.0f,-1.0f, 
-			1.0f, 1.0f,-1.0f, 
-			1.0f,-1.0f,-1.0f, 
-			1.0f, 1.0f, 1.0f, 
-			1.0f,-1.0f, 1.0f, 
-			1.0f, 1.0f, 1.0f, 
-			1.0f, 1.0f,-1.0f, 
-			-1.0f, 1.0f,-1.0f,
-			1.0f, 1.0f, 1.0f, 
-			-1.0f, 1.0f,-1.0f,
-			-1.0f, 1.0f, 1.0f,
-			1.0f, 1.0f, 1.0f, 
-			-1.0f, 1.0f, 1.0f,
-			1.0f,-1.0f, 1.0f,
+		static const GLfloat cube_face_varray[6][12] = {
+			{
+				// front
+				// CW winding
+				//0.0f, 0.0f, 0.0f,
+				//0.0f, 1.0f, 0.0f,
+				//1.0f, 0.0f, 0.0f,
+				//1.0f, 1.0f, 0.0f,
+				// CCW winding
+				0.0f, 0.0f, 0.0f,
+				1.0f, 0.0f, 0.0f,
+				0.0f, 1.0f, 0.0f,
+				1.0f, 1.0f, 0.0f,
+			}, {
+				// right
+				1.0f, 0.0f, 0.0f,
+				1.0f, 0.0f, -1.0f,
+				1.0f, 1.0f, 0.0f,
+				1.0f, 1.0f, -1.0f,
+			}, {
+				// top
+				1.0f, 0.0f, 0.0f,
+				1.0f, 1.0f, 0.0f,
+				0.0f, 1.0f, -1.0f,
+				1.0f, 1.0f, -1.0f,
+			}, {
+				// back
+				1,0,-1,
+				0,0,-1,
+				0,1,-1,
+				1,1,-1,
+			}, {
+				// left
+				0,0,-1,
+				0,1,-1,
+				0,1,0,
+				0,0,0,
+			}, {
+				// bottom
+				0,0,-1,
+				0,0,0,
+				1,0,0,
+				1,0,-1,
+			}
 		};
 
-		static const GLfloat cube_uv_buffer_data[] = { 
-			0.000000f, 1.000000f, 
-			0.000000f, 0.666666f, 
-			0.333333f, 0.666666f, 
-			1.000000f, 1.000000f, 
-			0.666666f, 0.666666f, 
-			1.000000f, 0.666666f, 
-			0.666666f, 0.666666f, 
-			0.333333f, 0.333333f, 
-			0.666666f, 0.333333f, 
-			1.000000f, 1.000000f, 
-			0.666666f, 1.000000f, 
-			0.666666f, 0.666666f, 
-			0.000000f, 1.000000f, 
-			0.333333f, 0.666666f, 
-			0.333333f, 1.000000f, 
-			0.666666f, 0.666666f, 
-			0.333333f, 0.666666f, 
-			0.333333f, 0.333333f, 
-			1.000000f, 0.333333f, 
-			1.000000f, 0.666666f, 
-			0.666666f, 0.666666f, 
-			0.666666f, 1.000000f, 
-			0.333333f, 0.666666f, 
-			0.666666f, 0.666666f, 
-			0.333333f, 0.666666f, 
-			0.666666f, 1.000000f, 
-			0.333333f, 1.000000f, 
-			0.000000f, 0.666666f, 
-			0.000000f, 0.333333f, 
-			0.333333f, 0.333333f, 
-			0.000000f, 0.666666f, 
-			0.333333f, 0.333333f, 
-			0.333333f, 0.666666f, 
-			0.666666f, 0.333333f, 
-			1.000000f, 0.333333f, 
-			0.666666f, 0.666666f,
+		static const GLfloat cube_face_tarray[6][8] = {
+			{
+				// front
+				0.0f, 1.0f/3.0f,
+				1.0f/3.0f, 1.0f/3.0f,
+				0.0f, 0.0f,
+				1.0f/3.0f, 0.0f,
+			}, {
+				// right
+				1.0f/3.0f, 1.0f/3.0f, 
+				2.0f/3.0f, 1.0f/3.0f, 
+				1.0f/3.0f, 0.000000f, 
+				2.0f/3.0f, 0.000000f, 
+			}, {
+				// top
+				2.0f/3.0f, 1.0f/3.0f, 
+				1.000000f, 1.0f/3.0f, 
+				2.0f/3.0f, 0.000000f, 
+				1.000000f, 0.000000f, 
+			}, {
+				// back
+				0.000000f, 1.000000f, 
+				0.333333f, 1.000000f, 
+				0.000000f, 0.666666f, 
+				0.333333f, 0.666666f, 
+			}, {
+				// left
+				0.000000f, 1.000000f, 
+				0.333333f, 1.000000f, 
+				0.000000f, 0.666666f, 
+				0.333333f, 0.666666f, 
+			}, {
+				// bottom
+				0.000000f, 1.000000f, 
+				0.333333f, 1.000000f, 
+				0.000000f, 0.666666f, 
+				0.333333f, 0.666666f, 
+			}
 		};
 
-		static const int num_array_buffers = 12;
+		static const int num_array_buffers = 2;
 
 		struct cube_array_buffer_deleter
 		{
@@ -112,9 +120,9 @@ namespace graphics
 				res = boost::shared_array<GLuint>(new GLuint[num_array_buffers], cube_array_buffer_deleter());
 				glGenBuffers(num_array_buffers, &res[0]);
 				glBindBuffer(GL_ARRAY_BUFFER, res[0]);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertex_buffer_data), cube_vertex_buffer_data, GL_STATIC_DRAW);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_face_varray), cube_face_varray, GL_STATIC_DRAW);
 				glBindBuffer(GL_ARRAY_BUFFER, res[1]);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_uv_buffer_data), cube_uv_buffer_data, GL_DYNAMIC_DRAW);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_face_tarray), cube_face_tarray, GL_DYNAMIC_DRAW);
 			}
 			return res;
 		}
@@ -150,29 +158,36 @@ namespace graphics
 			glUniform1i(tex0_it_->second.location, 0);
 
 			glEnableVertexAttribArray(a_position_it_->second.location);
-			glBindBuffer(GL_ARRAY_BUFFER, array_buffers_[0]);
-			glVertexAttribPointer(
-				a_position_it_->second.location, // The attribute we want to configure
-				3,                  // size
-				GL_FLOAT,           // type
-				GL_FALSE,           // normalized?
-				0,                  // stride
-				(void*)0            // array buffer offset
-			);
-
 			glEnableVertexAttribArray(a_tex_coord_it_->second.location);
-			glBindBuffer(GL_ARRAY_BUFFER, array_buffers_[1]);
-			glVertexAttribPointer(
-				a_tex_coord_it_->second.location, // The attribute we want to configure
-				2,                            // size : U+V => 2
-				GL_FLOAT,                     // type
-				GL_FALSE,                     // normalized?
-				0,                            // stride
-				(void*)0                      // array buffer offset
-			);
 
-			glDrawArrays(GL_TRIANGLES, 0, 12*3);
-			//glDrawArrays(GL_TRIANGLES, 0, 26);
+			for(int i = cube_model::FRONT; i <= cube_model::TOP; ++i) {
+				if(!cm->should_draw_face(i)) {
+					continue;
+				}
+
+				glBindBuffer(GL_ARRAY_BUFFER, array_buffers_[0]);
+				glVertexAttribPointer(
+					a_position_it_->second.location, // The attribute we want to configure
+					3,                  // size
+					GL_FLOAT,           // type
+					GL_FALSE,           // normalized?
+					sizeof(GLfloat)*i*12,  // stride
+					(void*)0            // array buffer offset
+				);
+
+				glBindBuffer(GL_ARRAY_BUFFER, array_buffers_[1]);
+				glVertexAttribPointer(
+					a_tex_coord_it_->second.location, // The attribute we want to configure
+					2,                            // size : U+V => 2
+					GL_FLOAT,                     // type
+					GL_FALSE,                     // normalized?
+					sizeof(GLfloat)*i*12,			// stride
+					(void*)0                      // array buffer offset
+				);
+
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+			}
+
 			glDisableVertexAttribArray(a_position_it_->second.location);
 			glDisableVertexAttribArray(a_tex_coord_it_->second.location);
 		}
@@ -234,6 +249,19 @@ namespace graphics
 		neg_z_neighbour_ = nz;
 	}
 
+	bool cube_model::should_draw_face(int f)
+	{
+		switch(f) {
+			case FRONT: return pos_z_neighbour_ == false;
+			case RIGHT:	return pos_x_neighbour_ == false;
+			case TOP:	return pos_y_neighbour_ == false;
+			case BACK:	return pos_z_neighbour_ == true;
+			case LEFT:	return pos_x_neighbour_ == true;
+			case BOTTOM:return pos_y_neighbour_ == true;
+		}
+		return false;
+	}
+
 	bool cube_model::is_fully_occluded()
 	{
 		return pos_x_neighbour_ && neg_x_neighbour_ 
@@ -267,10 +295,12 @@ namespace graphics
 	render::render(graphics::window_manager& wm, int w, int h) 
 			: wm_(wm), width_(w), height_(h)
 	{
-		view_ = glm::lookAt(glm::vec3(4.0f,3.0f,-20.0f), 
-			glm::vec3(0.0f, 0.0f, 0.0f), 
-			glm::vec3(0.0f, 1.0f, 0.0f));
-		projection_ = glm::perspective(45.0f, float(w)/float(h), 0.1f, 100.0f);
+		//view_ = glm::lookAt(glm::vec3(4.0f,3.0f,10.0f), 
+		//	glm::vec3(0.0f, 0.0f, 0.0f), 
+		//	glm::vec3(0.0f, 1.0f, 0.0f));
+		//projection_ = glm::perspective(45.0f, float(w)/float(h), 0.1f, 10.0f);
+		view_ = glm::mat4();
+		projection_ = glm::mat4();
 
 		tex2d_shader.reset(new shader::program_object("texture_shader_2d",
 			shader::shader(GL_VERTEX_SHADER, "texture_2d_vert", sys::read_file("data/texture_2d.vert")),
@@ -369,8 +399,8 @@ namespace graphics
 	{
 		GLfloat vc_array[] = {
 			r.xf(), r.yf(),
-			r.xf(), r.yf()+r.hf(),
 			r.xf()+r.wf(), r.yf(),
+			r.xf(), r.yf()+r.hf(),
 			r.xf()+r.wf(), r.yf()+r.hf(),
 		};
 		poly_shader->make_active();
@@ -380,9 +410,7 @@ namespace graphics
 		glBindBuffer(GL_ARRAY_BUFFER, generic_vbo[0]);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vc_array), vc_array, GL_DYNAMIC_DRAW);
 		glVertexAttribPointer(poly_a_position_it->second.location, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		glDisable(GL_CULL_FACE);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glEnable(GL_CULL_FACE);
 		glDisableVertexAttribArray(poly_a_position_it->second.location);
 	}
 
@@ -392,14 +420,14 @@ namespace graphics
 		GLfloat h = 2.0f*tex->height()/height_;
 		static const GLfloat tc_array[] = {
 			0.0f, 1.0f,
-			0.0f, 0.0f,
 			1.0f, 1.0f,
+			0.0f, 0.0f,
 			1.0f, 0.0f,
 		};
 		GLfloat vc_array[] = {
 			x, y,
-			x, y+h,
 			x+w, y,
+			x, y+h,
 			x+w, y+h,
 		};
 		tex2d_shader->make_active();
@@ -432,9 +460,7 @@ namespace graphics
 			0							  // array buffer offset
 		);
 
-		glDisable(GL_CULL_FACE);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glEnable(GL_CULL_FACE);
 		glDisableVertexAttribArray(tex2d_a_position_it->second.location);
 		glDisableVertexAttribArray(tex2d_a_texcoord_it->second.location);
 	}

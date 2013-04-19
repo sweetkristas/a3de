@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
 
 	try {
 		node::node world = json::parse_from_file(module::map_file("data/world.cfg"));
-		phys_sim(world);
+		//phys_sim(world);
 	} catch(json::parse_error& e) {
 		std::cerr << "Parse Error: " << e.what() << std::endl;
 	}
@@ -186,8 +186,8 @@ int main(int argc, char* argv[])
 			for(size_t m = 0; m != chunk[n].size(); ++m) {
 				chunk[n][m].resize(4);
 				for(size_t p = 0; p != chunk[n][m].size(); ++p) {
-					chunk[n][m][p] = graphics::cube_model_ptr(new graphics::cube_model("images/test_image_32x32.png"));
-					chunk[n][m][p]->translate(2.0f*n, -2.0f*p, 2.0f*m);
+					chunk[n][m][p] = graphics::cube_model_ptr(new graphics::cube_model("images/uvtemplate.png"));
+					chunk[n][m][p]->translate(1.0f*n, 1.0f*m, 1.0f*p);
 					chunk[n][m][p]->set_neighbourhood(
 						n != chunk.size()-1,
 						n != 0,
