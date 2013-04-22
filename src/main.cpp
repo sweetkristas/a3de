@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -93,7 +94,7 @@ bool process_events(graphics::render& render_obj)
 	while(SDL_PollEvent(&e)) {
 		switch(e.type) {
 		case SDL_MOUSEWHEEL:
-			initial_fov += e.wheel.y * 5;
+			initial_fov = std::max<float>(15.0, std::min<float>(90.0, initial_fov + e.wheel.y * 3.0f));
 			break;
 		case SDL_QUIT:
 			return false;
@@ -179,12 +180,13 @@ int main(int argc, char* argv[])
 			"simple_vertex", "data/simple_color.vert", 
 			"simple_fragment", "data/simple_color.frag");
 
+		const int num_cubes = 32;
 		std::vector<std::vector<std::vector<graphics::cube_model_ptr> > > chunk;
-		chunk.resize(4);
+		chunk.resize(num_cubes);
 		for(size_t n = 0; n != chunk.size(); ++n) {
-			chunk[n].resize(4);
+			chunk[n].resize(num_cubes);
 			for(size_t m = 0; m != chunk[n].size(); ++m) {
-				chunk[n][m].resize(4);
+				chunk[n][m].resize(num_cubes);
 				for(size_t p = 0; p != chunk[n][m].size(); ++p) {
 					chunk[n][m][p] = graphics::cube_model_ptr(new graphics::cube_model("images/uvtemplate.png"));
 					chunk[n][m][p]->translate(1.0f*n, 1.0f*m, 1.0f*p);

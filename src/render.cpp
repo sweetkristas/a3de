@@ -37,7 +37,7 @@ namespace graphics
 				1.0f, 1.0f, -1.0f,
 			}, {
 				// top
-				1.0f, 0.0f, 0.0f,
+				0.0f, 1.0f, 0.0f,
 				1.0f, 1.0f, 0.0f,
 				0.0f, 1.0f, -1.0f,
 				1.0f, 1.0f, -1.0f,
@@ -45,20 +45,20 @@ namespace graphics
 				// back
 				1,0,-1,
 				0,0,-1,
-				0,1,-1,
 				1,1,-1,
+				0,1,-1,
 			}, {
 				// left
 				0,0,-1,
+				0,0,0,
 				0,1,-1,
 				0,1,0,
-				0,0,0,
 			}, {
 				// bottom
 				0,0,-1,
+				1,0,-1,
 				0,0,0,
 				1,0,0,
-				1,0,-1,
 			}
 		};
 
@@ -83,22 +83,22 @@ namespace graphics
 				1.000000f, 0.000000f, 
 			}, {
 				// back
-				0.000000f, 1.000000f, 
-				0.333333f, 1.000000f, 
-				0.000000f, 0.666666f, 
-				0.333333f, 0.666666f, 
+				2.0f/3.0f, 2.0f/3.0f, 
+				1.000000f, 2.0f/3.0f, 
+				2.0f/3.0f, 1.0f/3.0f, 
+				1.000000f, 1.0f/3.0f, 
 			}, {
 				// left
-				0.000000f, 1.000000f, 
-				0.333333f, 1.000000f, 
-				0.000000f, 0.666666f, 
-				0.333333f, 0.666666f, 
+				2.0f/3.0f, 1.0f/3.0f, 
+				2.0f/3.0f, 2.0f/3.0f, 
+				1.0f/3.0f, 1.0f/3.0f, 
+				2.0f/3.0f, 1.0f/3.0f, 
 			}, {
 				// bottom
-				0.000000f, 1.000000f, 
-				0.333333f, 1.000000f, 
-				0.000000f, 0.666666f, 
-				0.333333f, 0.666666f, 
+				0.000000f, 2.0f/3.0f, 
+				1.0f/3.0f, 2.0f/3.0f, 
+				0.000000f, 1.0f/3.0f, 
+				1.0f/3.0f, 1.0f/3.0f, 
 			}
 		};
 
@@ -160,7 +160,7 @@ namespace graphics
 			glEnableVertexAttribArray(a_position_it_->second.location);
 			glEnableVertexAttribArray(a_tex_coord_it_->second.location);
 
-			for(int i = cube_model::FRONT; i <= cube_model::TOP; ++i) {
+			for(int i = cube_model::FRONT; i <= cube_model::BOTTOM; ++i) {
 				if(!cm->should_draw_face(i)) {
 					continue;
 				}
@@ -171,8 +171,8 @@ namespace graphics
 					3,                  // size
 					GL_FLOAT,           // type
 					GL_FALSE,           // normalized?
-					sizeof(GLfloat)*i*12,  // stride
-					(void*)0            // array buffer offset
+					0,  // stride
+					(void*)(sizeof(GLfloat)*i*12)            // array buffer offset
 				);
 
 				glBindBuffer(GL_ARRAY_BUFFER, array_buffers_[1]);
@@ -181,8 +181,8 @@ namespace graphics
 					2,                            // size : U+V => 2
 					GL_FLOAT,                     // type
 					GL_FALSE,                     // normalized?
-					sizeof(GLfloat)*i*12,			// stride
-					(void*)0                      // array buffer offset
+					0,			// stride
+					(void*)(sizeof(GLfloat)*i*8)                      // array buffer offset
 				);
 
 				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
