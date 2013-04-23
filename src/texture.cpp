@@ -100,7 +100,7 @@ namespace graphics
 	texture::texture(surface_ptr s, unsigned tf)
 		: flags_(tf)
 	{
-		texture_from_surface(s.get(), this);
+		texture_from_surface(s->get(), this);
 	}
 
 	const_texture_ptr texture::get(const std::string& fname, unsigned tf)

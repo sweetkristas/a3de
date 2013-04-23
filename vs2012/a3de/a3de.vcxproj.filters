@@ -603,6 +603,12 @@
     <ClCompile Include="..\..\src\btinterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cubes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\surface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\targetver.h">
@@ -1356,6 +1362,12 @@
       <Filter>Bullet</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\btinterface.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cubes.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\surface.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

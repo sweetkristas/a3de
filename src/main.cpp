@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "btinterface.hpp"
+#include "cubes.hpp"
 #include "filesystem.hpp"
 #include "fonts.hpp"
 #include "geometry.hpp"
@@ -180,27 +181,7 @@ int main(int argc, char* argv[])
 			"simple_vertex", "data/simple_color.vert", 
 			"simple_fragment", "data/simple_color.frag");
 
-		const int num_cubes = 32;
-		std::vector<std::vector<std::vector<graphics::cube_model_ptr> > > chunk;
-		chunk.resize(num_cubes);
-		for(size_t n = 0; n != chunk.size(); ++n) {
-			chunk[n].resize(num_cubes);
-			for(size_t m = 0; m != chunk[n].size(); ++m) {
-				chunk[n][m].resize(num_cubes);
-				for(size_t p = 0; p != chunk[n][m].size(); ++p) {
-					chunk[n][m][p] = graphics::cube_model_ptr(new graphics::cube_model("images/uvtemplate.png"));
-					chunk[n][m][p]->translate(1.0f*n, 1.0f*m, 1.0f*p);
-					chunk[n][m][p]->set_neighbourhood(
-						n != chunk.size()-1,
-						n != 0,
-						m != chunk[n].size()-1,
-						m != 0,
-						p != chunk[n][m].size()-1,
-						p != 0);
-					render_obj.add_cube(shader, chunk[n][m][p]);
-				}
-			}
-		}
+		cube::world cube_world(shader, module::map_file("images/noise.png"));
 		
 		notify::manager notifications;
 
@@ -219,7 +200,8 @@ int main(int argc, char* argv[])
 			running = process_events(render_obj);
 
 			double frame_processing_time = ptimer.elapsed_time_microseconds();
-			render_obj.draw();
+			//render_obj.draw();
+			cube_world.draw();
 			double frame_render_time = ptimer.elapsed_time_microseconds() - frame_processing_time;
 
 			std::stringstream ss1, ss2;

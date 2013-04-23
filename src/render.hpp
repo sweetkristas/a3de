@@ -5,6 +5,7 @@
 
 #include "color.hpp"
 #include "geometry.hpp"
+#include "graphics.hpp"
 #include "ref_counted_ptr.hpp"
 #include "shaders.hpp"
 #include "texture.hpp"
@@ -12,6 +13,20 @@
 
 namespace graphics
 {
+	struct vbo_deleter
+	{
+		vbo_deleter(int n) : n_(n)
+		{}
+
+		void operator()(GLuint* d) 
+		{
+			glDeleteBuffers(n_, d);
+			delete [n_] d;
+		}
+
+		int n_;
+	};
+
 	class cube;
 
 	class cube_model : public reference_counted_ptr
@@ -67,6 +82,7 @@ namespace graphics
 		const float* projection() { return &projection_[0][0]; }
 		int width() const { return width_; }
 		int height() const { return height_; }
+		void post_process_scene();
 
 		void blit_2d_texture(const_texture_ptr tex, GLfloat x, GLfloat y);
 		static void draw_rect(const rect& r, const color& c);
@@ -85,7 +101,11 @@ namespace graphics
 			boost::shared_ptr<cube> cube_;
 			shader::const_actives_map_iterator vm_uniform_it;
 			shader::const_actives_map_iterator pm_uniform_it;
+			shader::const_actives_map_iterator a_position_it_;
+			shader::const_actives_map_iterator a_tex_coord_it_;
 			std::vector<cube_model_ptr> cube_draw_list_;
+
+			boost::shared_array<GLuint> vbo_;
 		};
 		std::map<shader::program_object_ptr, cube_shader_object> cube_shader_map_;
 	};

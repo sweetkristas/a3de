@@ -16,7 +16,7 @@ namespace graphics
 {
 	namespace
 	{
-		static const GLfloat cube_face_varray[6][12] = {
+		static const GLfloat cube_face_varray[6][4][3] = {
 			{
 				// front
 				// CW winding
@@ -25,50 +25,50 @@ namespace graphics
 				//1.0f, 0.0f, 0.0f,
 				//1.0f, 1.0f, 0.0f,
 				// CCW winding
-				0.0f, 0.0f, 0.0f,
-				1.0f, 0.0f, 0.0f,
-				0.0f, 1.0f, 0.0f,
-				1.0f, 1.0f, 0.0f,
+				{ 0.0f, 0.0f, 0.0f },
+				{ 1.0f, 0.0f, 0.0f },
+				{ 0.0f, 1.0f, 0.0f },
+				{ 1.0f, 1.0f, 0.0f },
 			}, {
 				// right
-				1.0f, 0.0f, 0.0f,
-				1.0f, 0.0f, -1.0f,
-				1.0f, 1.0f, 0.0f,
-				1.0f, 1.0f, -1.0f,
+				{ 1.0f, 0.0f,  0.0f },
+				{ 1.0f, 0.0f, -1.0f },
+				{ 1.0f, 1.0f,  0.0f },
+				{ 1.0f, 1.0f, -1.0f },
 			}, {
 				// top
-				0.0f, 1.0f, 0.0f,
-				1.0f, 1.0f, 0.0f,
-				0.0f, 1.0f, -1.0f,
-				1.0f, 1.0f, -1.0f,
+				{ 0.0f, 1.0f, 0.0f },
+				{ 1.0f, 1.0f, 0.0f },
+				{ 0.0f, 1.0f, -1.0f },
+				{ 1.0f, 1.0f, -1.0f },
 			}, {
 				// back
-				1,0,-1,
-				0,0,-1,
-				1,1,-1,
-				0,1,-1,
+				{ 1,0,-1 },
+				{ 0,0,-1 },
+				{ 1,1,-1 },
+				{ 0,1,-1 },
 			}, {
 				// left
-				0,0,-1,
-				0,0,0,
-				0,1,-1,
-				0,1,0,
+				{ 0,0,-1 },
+				{ 0,0,0 },
+				{ 0,1,-1 },
+				{ 0,1,0 },
 			}, {
 				// bottom
-				0,0,-1,
-				1,0,-1,
-				0,0,0,
-				1,0,0,
+				{ 0,0,-1 },
+				{ 1,0,-1 },
+				{ 0,0,0 },
+				{ 1,0,0 },
 			}
 		};
 
 		static const GLfloat cube_face_tarray[6][8] = {
 			{
 				// front
-				0.0f, 1.0f/3.0f,
+				0.000000f, 1.0f/3.0f,
 				1.0f/3.0f, 1.0f/3.0f,
-				0.0f, 0.0f,
-				1.0f/3.0f, 0.0f,
+				0.000000f, 0.000000f,
+				1.0f/3.0f, 0.000000f,
 			}, {
 				// right
 				1.0f/3.0f, 1.0f/3.0f, 
@@ -104,25 +104,16 @@ namespace graphics
 
 		static const int num_array_buffers = 2;
 
-		struct cube_array_buffer_deleter
-		{
-			void operator()(GLuint* d) 
-			{
-				glDeleteBuffers(num_array_buffers, d);
-				delete [num_array_buffers] d;
-			}
-		};
-
 		boost::shared_array<GLuint>& cube_array_buffer()
 		{
 			static boost::shared_array<GLuint> res;
 			if(res == NULL) {
-				res = boost::shared_array<GLuint>(new GLuint[num_array_buffers], cube_array_buffer_deleter());
+				res = boost::shared_array<GLuint>(new GLuint[num_array_buffers], vbo_deleter(num_array_buffers));
 				glGenBuffers(num_array_buffers, &res[0]);
 				glBindBuffer(GL_ARRAY_BUFFER, res[0]);
 				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_face_varray), cube_face_varray, GL_STATIC_DRAW);
 				glBindBuffer(GL_ARRAY_BUFFER, res[1]);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_face_tarray), cube_face_tarray, GL_DYNAMIC_DRAW);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_face_tarray), cube_face_tarray, GL_STATIC_DRAW);
 			}
 			return res;
 		}
@@ -145,11 +136,34 @@ namespace graphics
 		virtual ~cube()
 		{}
 
+		void prepare_draw()
+		{
+			glEnableVertexAttribArray(a_position_it_->second.location);
+			glEnableVertexAttribArray(a_tex_coord_it_->second.location);
+
+			glBindBuffer(GL_ARRAY_BUFFER, array_buffers_[0]);
+			glVertexAttribPointer(
+				a_position_it_->second.location, // The attribute we want to configure
+				3,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,  // stride
+				0            // array buffer offset
+			);
+		}
+
+		void end_draw()
+		{
+			glDisableVertexAttribArray(a_position_it_->second.location);
+			glDisableVertexAttribArray(a_tex_coord_it_->second.location);
+		}
+
 		void draw(cube_model_ptr cm) const
 		{
 			if(cm->is_fully_occluded()) {
 				return;
 			}
+			//profile::manager pmain("cube::draw()");
 
 			shader_->set_uniform(mm_uniform_it_, &cm->model()[0][0]);
 
@@ -157,23 +171,10 @@ namespace graphics
 			glBindTexture(GL_TEXTURE_2D, cm->tex_id());
 			glUniform1i(tex0_it_->second.location, 0);
 
-			glEnableVertexAttribArray(a_position_it_->second.location);
-			glEnableVertexAttribArray(a_tex_coord_it_->second.location);
-
 			for(int i = cube_model::FRONT; i <= cube_model::BOTTOM; ++i) {
 				if(!cm->should_draw_face(i)) {
 					continue;
 				}
-
-				glBindBuffer(GL_ARRAY_BUFFER, array_buffers_[0]);
-				glVertexAttribPointer(
-					a_position_it_->second.location, // The attribute we want to configure
-					3,                  // size
-					GL_FLOAT,           // type
-					GL_FALSE,           // normalized?
-					0,  // stride
-					(void*)(sizeof(GLfloat)*i*12)            // array buffer offset
-				);
 
 				glBindBuffer(GL_ARRAY_BUFFER, array_buffers_[1]);
 				glVertexAttribPointer(
@@ -185,11 +186,8 @@ namespace graphics
 					(void*)(sizeof(GLfloat)*i*8)                      // array buffer offset
 				);
 
-				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				glDrawArrays(GL_TRIANGLE_STRIP, 4, 0);
 			}
-
-			glDisableVertexAttribArray(a_position_it_->second.location);
-			glDisableVertexAttribArray(a_tex_coord_it_->second.location);
 		}
 	protected:
 	private:
@@ -283,13 +281,6 @@ namespace graphics
 		
 		boost::shared_array<GLuint> generic_vbo;
 		const int num_generic_vbo = 2;
-		struct vbo_deleter
-		{
-			void operator()(GLuint* vbo)
-			{
-				glDeleteBuffers(num_generic_vbo, vbo);
-			}
-		};
 	}
 
 	render::render(graphics::window_manager& wm, int w, int h) 
@@ -316,7 +307,7 @@ namespace graphics
 		poly_u_color_it = poly_shader->get_uniform_iterator("u_color");
 		poly_a_position_it = poly_shader->get_attribute_iterator("a_position");
 		
-		generic_vbo.reset(new GLuint[num_generic_vbo], vbo_deleter());
+		generic_vbo.reset(new GLuint[num_generic_vbo], vbo_deleter(num_generic_vbo));
 		glGenBuffers(num_generic_vbo, generic_vbo.get());
 	}
 
@@ -369,6 +360,38 @@ namespace graphics
 		it->second.cube_draw_list_.push_back(obj);
 	}
 
+	void render::post_process_scene()
+	{
+		for(auto it = cube_shader_map_.begin(); it != cube_shader_map_.end(); ++it) {
+			if(it->second.cube_draw_list_.size() != 0) {
+				it->second.vbo_ = boost::shared_array<GLuint>(new GLuint[3], vbo_deleter(3));				
+
+				std::vector<GLfloat> varray;
+				varray.resize(it->second.cube_draw_list_.size()*6*4*3);
+
+				size_t cnt = 0;
+				for(auto obj = it->second.cube_draw_list_.begin(); 
+					obj != it->second.cube_draw_list_.end(); 
+					++obj, ++cnt) {
+					//cube_face_indexed_varray
+					for(int n = cube_model::FRONT; n <= cube_model::BOTTOM; ++n) {
+						for(int t = 0; t < 4; t++) {
+							glm::vec4 tmp = (*obj)->model() * glm::vec4(cube_face_varray[n][t][0], 
+								cube_face_varray[n][t][1], cube_face_varray[n][t][2], 1.0f);
+							varray[cnt*72+n*12+t*3+0] = tmp.x;
+							varray[cnt*72+n*12+t*3+1] = tmp.y;
+							varray[cnt*72+n*12+t*3+2] = tmp.z;
+						}
+					}
+				}
+				glBindBuffer(GL_ARRAY_BUFFER, it->second.vbo_[0]);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(varray), &varray[0], GL_STATIC_DRAW);
+				glBindBuffer(GL_ARRAY_BUFFER, it->second.vbo_[2]);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(cube_face_tarray), cube_face_tarray, GL_STATIC_DRAW);
+			}
+		}
+	}
+
 	void render::draw()
 	{
 		//profile::manager manager("render::draw()");
@@ -380,9 +403,27 @@ namespace graphics
 				it->first->make_active();
 				it->first->set_uniform(it->second.vm_uniform_it, view());
 				it->first->set_uniform(it->second.pm_uniform_it, projection());
-				for(auto obj = it->second.cube_draw_list_.begin(); obj != it->second.cube_draw_list_.end(); ++obj) {
-					it->second.cube_->draw(*obj);
-				}
+
+				// XXX: todo
+				it->second.cube_->prepare_draw();
+
+				glBindBuffer(GL_ARRAY_BUFFER, it->second.vbo_[0]);
+				glVertexAttribPointer(
+					a_position_it_->second.location, // The attribute we want to configure
+					3,                  // size
+					GL_FLOAT,           // type
+					GL_FALSE,           // normalized?
+					0,  // stride
+					0            // array buffer offset
+				);
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				it->second.cube_->end_draw();
+
+				//it->second.cube_->prepare_draw();
+				//for(auto obj = it->second.cube_draw_list_.begin(); obj != it->second.cube_draw_list_.end(); ++obj) {
+				//	it->second.cube_->draw(*obj);
+				//}
+				//it->second.cube_->end_draw();
 			}
 		}
 		
